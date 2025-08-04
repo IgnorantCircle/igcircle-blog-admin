@@ -1,8 +1,29 @@
 // 运行时配置
 import type { ErrorResponse } from '@/types';
-import type { RequestConfig } from '@umijs/max';
+import type { AxiosRequestConfig, AxiosResponse } from '@umijs/max';
+import { RequestConfig } from '@umijs/max';
 import { message } from 'antd';
 export async function getInitialState(): Promise<{ name: string }> {
+  // 检查是否存在token且未过期
+  const token = localStorage.getItem('token');
+  const userInfo = localStorage.getItem('userInfo');
+
+  if (token && userInfo) {
+    // 简单检查token是否过期（实际项目中可能需要更复杂的验证）
+    try {
+      // 如果在登录相关页面，不进行跳转
+      const { pathname } = window.location;
+      message.success('已登录，正在为您跳转首页～');
+      if (pathname === '/login' || pathname === '/register') {
+        window.location.href = '/';
+      }
+    } catch (error) {
+      // Token无效，清除本地存储
+      localStorage.removeItem('token');
+      localStorage.removeItem('userInfo');
+    }
+  }
+
   return { name: '' };
 }
 
@@ -21,7 +42,7 @@ export const request: RequestConfig = {
   timeout: 10000,
 
   // 请求基础URL
-  baseURL: process.env.REACT_APP_API_BASE_URL,
+  baseURL: process.env.API_BASE_URL || 'http://localhost:7001/api',
   // 请求头配置
   headers: {
     'Content-Type': 'application/json',
@@ -29,7 +50,7 @@ export const request: RequestConfig = {
 
   // 请求拦截器
   requestInterceptors: [
-    (config: any) => {
+    (config: AxiosRequestConfig) => {
       // 添加认证token
       const token = localStorage.getItem('token');
       if (token) {
@@ -44,7 +65,7 @@ export const request: RequestConfig = {
 
   // 响应拦截器
   responseInterceptors: [
-    (response) => {
+    (response: AxiosResponse) => {
       // 处理成功响应
       const { data } = response;
 

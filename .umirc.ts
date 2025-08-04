@@ -11,6 +11,11 @@ export default defineConfig({
   },
   routes: [
     {
+      path: '/login',
+      component: './Login',
+      layout: false,
+    },
+    {
       path: '/',
       redirect: '/home',
     },
@@ -22,4 +27,3 @@ export default defineConfig({
   ],
   npmClient: 'pnpm',
 });
-
