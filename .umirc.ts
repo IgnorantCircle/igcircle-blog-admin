@@ -30,6 +30,12 @@ export default defineConfig({
       component: './Categories',
       icon: 'FolderOutlined',
     },
+    {
+      name: '标签管理',
+      path: '/tags',
+      component: './Tags',
+      icon: 'TagOutlined',
+    },
   ],
   npmClient: 'pnpm',
 });

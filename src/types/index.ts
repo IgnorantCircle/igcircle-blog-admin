@@ -1,6 +1,6 @@
 // 基础实体接口
 export interface BaseEntity {
-  id: number;
+  id: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -183,7 +183,7 @@ export interface Tag extends BaseEntity {
   slug: string;
   description?: string;
   color?: string;
-  isVisible: boolean;
+  isActive: boolean;
   articleCount: number;
 }
 
@@ -192,19 +192,20 @@ export interface CreateTagDto {
   slug?: string;
   description?: string;
   color?: string;
-  isVisible?: boolean;
+  isActive?: boolean;
 }
 
 export interface UpdateTagDto {
+  id: string;
   name?: string;
   slug?: string;
   description?: string;
   color?: string;
-  isVisible?: boolean;
+  isActive?: boolean;
 }
 
 export interface TagQueryDto extends PaginationParams {
-  isVisible?: boolean;
+  isActive?: boolean;
 }
 
 export interface PopularTagsDto {
