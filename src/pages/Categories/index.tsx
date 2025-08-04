@@ -1,4 +1,5 @@
 import { categoryAPI } from '@/services/category';
+import type { Category, CreateCategoryDto, UpdateCategoryDto } from '@/types';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import {
   ActionType,
@@ -16,41 +17,12 @@ import { Button, Card, Col, Popconfirm, Row, Space, Tag, Tree } from 'antd';
 import type { DataNode } from 'antd/es/tree';
 import React, { useRef, useState } from 'react';
 
-interface CategoryItem {
-  id: number;
-  name: string;
-  slug: string;
-  description?: string;
-  parentId?: number;
-  parent?: {
-    id: number;
-    name: string;
-  };
-  children?: CategoryItem[];
-  levelShow: number;
-  isActive: boolean;
-  articleCount: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface CategoryFormData {
-  name: string;
-  slug?: string;
-  description?: string;
-  parentId?: number;
-  levelShow?: number;
-  isActive?: boolean;
-}
-
 const CategoryList: React.FC = () => {
   const actionRef = useRef<ActionType>();
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
-  const [currentCategory, setCurrentCategory] = useState<CategoryItem | null>(
-    null,
-  );
-  const [categoryTree, setCategoryTree] = useState<CategoryItem[]>([]);
+  const [currentCategory, setCurrentCategory] = useState<Category | null>(null);
+  const [categoryTree, setCategoryTree] = useState<Category[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'tree'>('table');
 
   // 生成slug
@@ -70,7 +42,7 @@ const CategoryList: React.FC = () => {
   };
 
   // 删除分类
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     try {
       await categoryAPI.deleteCategory(id);
       actionRef.current?.reload();
@@ -79,7 +51,7 @@ const CategoryList: React.FC = () => {
   };
 
   // 创建分类
-  const handleCreate = async (values: CategoryFormData) => {
+  const handleCreate = async (values: CreateCategoryDto) => {
     try {
       await categoryAPI.createCategory({
         ...values,
@@ -95,12 +67,12 @@ const CategoryList: React.FC = () => {
   };
 
   // 更新分类
-  const handleUpdate = async (values: CategoryFormData) => {
+  const handleUpdate = async (values: UpdateCategoryDto) => {
     if (!currentCategory) return false;
     try {
       await categoryAPI.updateCategory(currentCategory.id, {
         ...values,
-        slug: values.slug || generateSlug(values.name),
+        slug: values.slug || (values.name && generateSlug(values.name)),
       });
       setEditModalVisible(false);
       setCurrentCategory(null);
@@ -113,7 +85,7 @@ const CategoryList: React.FC = () => {
   };
 
   // 转换为树形数据
-  const convertToTreeData = (categories: CategoryItem[]): DataNode[] => {
+  const convertToTreeData = (categories: Category[]): DataNode[] => {
     return categories.map((category) => ({
       key: category.id,
       title: (
@@ -166,7 +138,7 @@ const CategoryList: React.FC = () => {
     }));
   };
 
-  const columns: ProColumns<CategoryItem>[] = [
+  const columns: ProColumns<Category>[] = [
     {
       title: '分类名称',
       dataIndex: 'name',
@@ -262,7 +234,7 @@ const CategoryList: React.FC = () => {
     <PageContainer>
       <Row gutter={16}>
         <Col span={viewMode === 'tree' ? 12 : 24}>
-          <ProTable<CategoryItem>
+          <ProTable<Category>
             headerTitle="分类管理"
             actionRef={actionRef}
             rowKey="id"
@@ -343,6 +315,7 @@ const CategoryList: React.FC = () => {
         onFinish={handleCreate}
         modalProps={{
           destroyOnClose: true,
+          maskClosable: false,
         }}
       >
         <ProFormText
@@ -380,7 +353,7 @@ const CategoryList: React.FC = () => {
           request={async () => {
             try {
               const response = await categoryAPI.getCategories({ limit: 100 });
-              return (response.items || []).map((cat: CategoryItem) => ({
+              return (response.items || []).map((cat: Category) => ({
                 label: cat.name,
                 value: cat.id,
               }));
@@ -451,8 +424,8 @@ const CategoryList: React.FC = () => {
             try {
               const response = await categoryAPI.getCategories({ limit: 100 });
               return (response.items || [])
-                .filter((cat: CategoryItem) => cat.id !== currentCategory?.id)
-                .map((cat: CategoryItem) => ({
+                .filter((cat: Category) => cat.id !== currentCategory?.id)
+                .map((cat: Category) => ({
                   label: cat.name,
                   value: cat.id,
                 }));

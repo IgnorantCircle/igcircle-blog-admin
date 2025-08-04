@@ -28,7 +28,7 @@ export const categoryAPI = {
   },
 
   // 根据ID获取分类详情
-  getCategory: (id: number): Promise<Category> => {
+  getCategory: (id: string): Promise<Category> => {
     return http.get(`/admin/categories/${id}`);
   },
 
@@ -43,12 +43,12 @@ export const categoryAPI = {
   },
 
   // 更新分类
-  updateCategory: (id: number, data: UpdateCategoryDto): Promise<Category> => {
+  updateCategory: (id: string, data: UpdateCategoryDto): Promise<Category> => {
     return http.patch(`/admin/categories/${id}`, data);
   },
 
   // 删除分类
-  deleteCategory: (id: number): Promise<void> => {
+  deleteCategory: (id: string): Promise<void> => {
     return http.delete(`/admin/categories/${id}`);
   },
 };
