@@ -142,7 +142,7 @@ export interface Category extends BaseEntity {
   parentId?: number;
   parent?: Category;
   children?: Category[];
-  sortOrder: number;
+  levelShow: number;
   isActive: boolean;
   articleCount: number;
 }
@@ -152,7 +152,7 @@ export interface CreateCategoryDto {
   slug?: string;
   description?: string;
   parentId?: number;
-  sortOrder?: number;
+  levelShow?: number;
   isActive?: boolean;
 }
 
@@ -161,12 +161,12 @@ export interface UpdateCategoryDto {
   slug?: string;
   description?: string;
   parentId?: number;
-  sortOrder?: number;
+  levelShow?: number;
   isActive?: boolean;
 }
 
 export interface CategoryQueryDto extends PaginationParams {
-  parentId?: number;
+  parentName?: number;
   isActive?: boolean;
 }
 

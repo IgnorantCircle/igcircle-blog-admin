@@ -24,6 +24,12 @@ export default defineConfig({
       path: '/home',
       component: './Home',
     },
+    {
+      name: '分类管理',
+      path: '/categories',
+      component: './Categories',
+      icon: 'FolderOutlined',
+    },
   ],
   npmClient: 'pnpm',
 });

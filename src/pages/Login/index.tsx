@@ -1,4 +1,4 @@
-import { authAPI } from '@/service';
+import { authAPI } from '@/services';
 import { LoginDto } from '@/types';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { history } from '@umijs/max';

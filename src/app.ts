@@ -13,8 +13,8 @@ export async function getInitialState(): Promise<{ name: string }> {
     try {
       // 如果在登录相关页面，不进行跳转
       const { pathname } = window.location;
-      message.success('已登录，正在为您跳转首页～');
       if (pathname === '/login' || pathname === '/register') {
+        message.success('已登录，正在为您跳转首页～');
         window.location.href = '/';
       }
     } catch (error) {
