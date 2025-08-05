@@ -1,5 +1,6 @@
 import { categoryAPI } from '@/services/category';
 import type { Category, CreateCategoryDto, UpdateCategoryDto } from '@/types';
+import { formatTimestamp } from '@/utils/format';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import {
   ActionType,
@@ -197,6 +198,7 @@ const CategoryList: React.FC = () => {
       width: 150,
       search: false,
       valueType: 'dateTime',
+      render: (_, record) => formatTimestamp(record.updatedAt),
     },
     {
       title: '操作',

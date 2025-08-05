@@ -1,5 +1,6 @@
 import { tagAPI } from '@/services/tag';
 import type { CreateTagDto, Tag as TagItem, UpdateTagDto } from '@/types';
+import { formatTimestamp } from '@/utils/format';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import {
   ActionType,
@@ -157,6 +158,7 @@ const TagList: React.FC = () => {
       dataIndex: 'createdAt',
       width: 150,
       valueType: 'dateTime',
+      render: (_, record) => formatTimestamp(record.updatedAt),
     },
     {
       title: '操作',
