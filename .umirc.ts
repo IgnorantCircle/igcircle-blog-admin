@@ -20,9 +20,36 @@ export default defineConfig({
       redirect: '/home',
     },
     {
-      name: '首页',
+      name: '数据总览',
       path: '/home',
       component: './Home',
+      icon: 'DashboardOutlined',
+    },
+    {
+      name: '文章管理',
+      path: '/articles',
+      icon: 'FileTextOutlined',
+      routes: [
+        {
+          path: '/articles',
+          component: './Articles',
+        },
+        {
+          path: '/articles/create',
+          component: './Articles/Edit',
+          hideInMenu: true,
+        },
+        {
+          path: '/articles/edit/:id',
+          component: './Articles/Edit',
+          hideInMenu: true,
+        },
+        {
+          path: '/articles/preview/:id',
+          component: './Articles/Preview',
+          hideInMenu: true,
+        },
+      ],
     },
     {
       name: '分类管理',

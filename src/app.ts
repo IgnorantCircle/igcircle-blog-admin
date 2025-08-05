@@ -1,20 +1,18 @@
 // 运行时配置
-import type { ErrorResponse } from '@/types';
+import type { ErrorResponse, User } from '@/types';
 import type { AxiosRequestConfig, AxiosResponse } from '@umijs/max';
 import { RequestConfig } from '@umijs/max';
 import { message } from 'antd';
-export async function getInitialState(): Promise<{ name: string }> {
-  // 检查是否存在token且未过期
+export async function getInitialState(): Promise<{ userInfo?: User } | null> {
+  // 检查是否存在token
   const token = localStorage.getItem('token');
-  const userInfo = localStorage.getItem('userInfo');
+  const userInfo = localStorage.getItem('userInfo') ?? '';
 
   if (token && userInfo) {
-    // 简单检查token是否过期（实际项目中可能需要更复杂的验证）
     try {
       // 如果在登录相关页面，不进行跳转
       const { pathname } = window.location;
       if (pathname === '/login' || pathname === '/register') {
-        message.success('已登录，正在为您跳转首页～');
         window.location.href = '/';
       }
     } catch (error) {
@@ -24,7 +22,7 @@ export async function getInitialState(): Promise<{ name: string }> {
     }
   }
 
-  return { name: '' };
+  return { userInfo: JSON.parse(userInfo) };
 }
 
 export const layout = () => {

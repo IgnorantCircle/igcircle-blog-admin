@@ -2,20 +2,24 @@
   "private": true,
   "author": "igCircle <df314376@126.com>",
   "scripts": {
-    "dev": "max dev",
     "build": "max build",
+    "dev": "max dev",
     "format": "prettier --cache --write .",
-    "prepare": "husky",
     "postinstall": "max setup",
+    "prepare": "husky",
     "setup": "max setup",
     "start": "npm run dev"
   },
   "dependencies": {
     "@ant-design/icons": "^5.0.1",
+    "@ant-design/plots": "^2.6.3",
     "@ant-design/pro-components": "^2.4.4",
+    "@uiw/react-md-editor": "^3.25.6",
     "@umijs/max": "^4.4.12",
     "antd": "^5.4.0",
-    "dayjs": "^1.11.13"
+    "class-transformer": "^0.5.1",
+    "dayjs": "^1.11.10",
+    "prismjs": "^1.30.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.33",

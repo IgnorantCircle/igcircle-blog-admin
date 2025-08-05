@@ -28,7 +28,7 @@ export const tagAPI = {
 
   // 获取标签统计信息
   getStatistics: (): Promise<TagStats> => {
-    return http.get('/admin/tags/statistics');
+    return http.get('/admin/tags/stats');
   },
 
   // 根据ID获取标签详情

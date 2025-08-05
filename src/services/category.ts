@@ -24,7 +24,7 @@ export const categoryAPI = {
 
   // 获取分类统计信息
   getStatistics: (): Promise<CategoryStats> => {
-    return http.get('/admin/categories/stat');
+    return http.get('/admin/categories/stats');
   },
 
   // 根据ID获取分类详情
