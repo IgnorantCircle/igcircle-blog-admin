@@ -1,4 +1,4 @@
-import { tagAPI } from '@/services/tag';
+import { tagAPI } from '@/services';
 import type { CreateTagDto, Tag as TagItem, UpdateTagDto } from '@/types';
 import { formatTimestamp } from '@/utils/format';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';

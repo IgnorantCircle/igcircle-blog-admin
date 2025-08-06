@@ -1,4 +1,4 @@
-import { articleAPI } from '@/services/article';
+import { articleAPI } from '@/services';
 import type { Article } from '@/types';
 import {
   EyeOutlined,

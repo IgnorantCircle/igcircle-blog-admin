@@ -1,6 +1,4 @@
-import { articleAPI } from '@/services/article';
-import { categoryAPI } from '@/services/category';
-import { tagAPI } from '@/services/tag';
+import { articleAPI, categoryAPI, tagAPI } from '@/services';
 import {
   ClockCircleOutlined,
   EditOutlined,

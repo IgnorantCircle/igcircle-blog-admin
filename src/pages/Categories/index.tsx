@@ -1,4 +1,4 @@
-import { categoryAPI } from '@/services/category';
+import { categoryAPI } from '@/services';
 import type { Category, CreateCategoryDto, UpdateCategoryDto } from '@/types';
 import { formatTimestamp } from '@/utils/format';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
