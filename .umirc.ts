@@ -63,6 +63,12 @@ export default defineConfig({
       component: './Tags',
       icon: 'TagOutlined',
     },
+    {
+      name: '用户管理',
+      path: '/users',
+      component: './Users',
+      icon: 'UserOutlined',
+    },
   ],
   npmClient: 'pnpm',
 });
