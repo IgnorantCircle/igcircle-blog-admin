@@ -1,5 +1,5 @@
-import { articleAPI } from '@/services';
-import type { Article } from '@/types';
+import { articleAPI } from '@/services/article';
+import type { Article, ArticleStats } from '@/types';
 import {
   EyeOutlined,
   FileTextOutlined,
@@ -28,24 +28,6 @@ import React, { useEffect, useState } from 'react';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
-
-interface ArticleStats {
-  total: number;
-  published: number;
-  draft: number;
-  archived: number;
-  totalViews: number;
-  totalLikes: number;
-  totalComments: number;
-  totalShares: number;
-  featuredCount: number;
-  topCount: number;
-  recentArticles: Article[];
-  popularArticles: Article[];
-  categoryStats: { name: string; count: number; percentage: number }[];
-  tagStats: { name: string; count: number; percentage: number }[];
-  monthlyStats: { month: string; articles: number; views: number }[];
-}
 
 const ArticleStatistics: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -203,7 +185,11 @@ const ArticleStatistics: React.FC = () => {
           </Select>
           <RangePicker
             value={dateRange}
-            onChange={(dates) => dates && setDateRange(dates)}
+            onChange={(dates) => {
+              if (dates && dates[0] && dates[1]) {
+                setDateRange([dates[0], dates[1]]);
+              }
+            }}
           />
           <Button onClick={loadStatistics} loading={loading}>
             刷新数据
@@ -347,7 +333,8 @@ const ArticleStatistics: React.FC = () => {
               label={{
                 type: 'inner',
                 offset: '-30%',
-                content: ({ percent }) => `${(percent * 100).toFixed(0)}%`,
+                content: ({ percent }: { percent: number }) =>
+                  `${(percent * 100).toFixed(0)}%`,
                 style: {
                   fontSize: 14,
                   textAlign: 'center',

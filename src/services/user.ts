@@ -9,7 +9,7 @@ import type {
   UserQueryDto,
   UserStats,
 } from '@/types';
-import { http } from '../utils/request';
+import { http } from '@/utils/request';
 
 // 用户管理相关API
 export const userAPI = {

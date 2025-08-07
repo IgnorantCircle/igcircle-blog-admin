@@ -1,10 +1,11 @@
-import { articleAPI } from '@/services';
+import { articleAPI } from '@/services/article';
 import type { Article } from '@/types';
 import { formatTimestamp } from '@/utils/format';
 import {
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
+  ImportOutlined,
   MoreOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
@@ -24,13 +25,12 @@ import {
   Tag,
   message,
 } from 'antd';
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 
 type ArticleItem = Article;
 
 const ArticleList: React.FC = () => {
   const actionRef = useRef<ActionType>();
-  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
 
   // 状态标签颜色映射
   const statusColorMap = {
@@ -54,22 +54,6 @@ const ArticleList: React.FC = () => {
       actionRef.current?.reload();
     } catch (error) {
       message.error('删除失败');
-    }
-  };
-
-  // 批量删除
-  const handleBatchDelete = async () => {
-    if (selectedRowKeys.length === 0) {
-      message.warning('请选择要删除的文章');
-      return;
-    }
-    try {
-      await articleAPI.batchDeleteArticles(selectedRowKeys);
-      message.success('批量删除成功');
-      setSelectedRowKeys([]);
-      actionRef.current?.reload();
-    } catch (error) {
-      message.error('批量删除失败');
     }
   };
 
@@ -111,6 +95,17 @@ const ArticleList: React.FC = () => {
     }
   };
 
+  // 切换可见性
+  const handleToggleVisible = async (id: string) => {
+    try {
+      await articleAPI.toggleVisible(id);
+      message.success('操作成功');
+      actionRef.current?.reload();
+    } catch (error) {
+      message.error('操作失败');
+    }
+  };
+
   // 归档文章
   const handleArchive = async (id: string) => {
     try {
@@ -140,6 +135,11 @@ const ArticleList: React.FC = () => {
       onClick: () => handleToggleFeatured(record.id),
     },
     {
+      key: 'visible',
+      label: record.isVisible ? '隐藏文章' : '显示文章',
+      onClick: () => handleToggleVisible(record.id),
+    },
+    {
       key: 'archive',
       label: '归档',
       onClick: () => handleArchive(record.id),
@@ -152,16 +152,36 @@ const ArticleList: React.FC = () => {
       title: '标题',
       dataIndex: 'title',
       width: 300,
+      search: {
+        transform: (value) => ({
+          keyword: value,
+        }),
+      },
+      fieldProps: {
+        label: '关键词',
+      },
+
       ellipsis: true,
       render: (text, record) => (
         <div>
           <div style={{ fontWeight: 500 }}>
             {record.isTop && <Tag color="red">置顶</Tag>}
             {record.isFeatured && <Tag color="gold">精选</Tag>}
+            {!record.isVisible && <Tag color="gray">隐藏</Tag>}
             {text}
           </div>
           {record.summary && (
-            <div style={{ color: '#999', fontSize: '12px', marginTop: '4px' }}>
+            <div
+              style={{
+                color: '#999',
+                fontSize: '12px',
+                marginTop: '4px',
+                maxWidth: '300px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
               {record.summary}
             </div>
           )}
@@ -312,22 +332,18 @@ const ArticleList: React.FC = () => {
             新建文章
           </Button>,
           <Button
+            key="import"
+            icon={<ImportOutlined />}
+            onClick={() => history.push('/articles/import')}
+          >
+            导入文章
+          </Button>,
+          <Button
             key="statistics"
             onClick={() => history.push('/articles/statistics')}
           >
             文章统计
           </Button>,
-          selectedRowKeys.length > 0 && (
-            <Popconfirm
-              key="batchDelete"
-              title={`确定要删除选中的 ${selectedRowKeys.length} 篇文章吗？`}
-              onConfirm={handleBatchDelete}
-              okText="确定"
-              cancelText="取消"
-            >
-              <Button danger>批量删除</Button>
-            </Popconfirm>
-          ),
         ]}
         request={async (params, sort) => {
           try {
@@ -361,10 +377,6 @@ const ArticleList: React.FC = () => {
           }
         }}
         columns={columns}
-        rowSelection={{
-          selectedRowKeys,
-          onChange: (keys) => setSelectedRowKeys(keys as string[]),
-        }}
         pagination={{
           defaultPageSize: 10,
           showSizeChanger: true,

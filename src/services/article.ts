@@ -1,7 +1,6 @@
 import type {
   Article,
   ArticleQueryDto,
-  ArticleStats,
   CreateArticleDto,
   PaginatedResponse,
   PublishArticleDto,
@@ -84,13 +83,18 @@ export const articleAPI = {
     return http.put(`/admin/articles/${id}/top`);
   },
 
+  // 切换可见性状态
+  toggleVisible: (id: string): Promise<Article> => {
+    return http.put(`/admin/articles/${id}/visible`);
+  },
+
   // 删除文章
   deleteArticle: (id: string): Promise<void> => {
     return http.delete(`/admin/articles/${id}`);
   },
 
   // 批量删除文章
-  batchDeleteArticles: (ids: string[]): Promise<void> => {
-    return http.delete('/admin/articles/batch', { ids });
+  batchDeleteArticles: (data: { ids: string[] }): Promise<void> => {
+    return http.delete('/admin/articles/batch', data);
   },
 };

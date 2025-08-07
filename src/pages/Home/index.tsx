@@ -1,60 +1,41 @@
-import { articleAPI, categoryAPI, tagAPI } from '@/services';
-import {
-  ClockCircleOutlined,
-  EditOutlined,
-  EyeOutlined,
-  FileTextOutlined,
-  FolderOutlined,
-  LikeOutlined,
-  MessageOutlined,
-  TagOutlined,
-  TrophyOutlined,
-} from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
 import {
   PageContainer,
   ProCard,
   StatisticCard,
 } from '@ant-design/pro-components';
-import { history } from '@umijs/max';
 import {
-  Avatar,
-  Button,
-  Card,
-  Col,
-  List,
-  Progress,
   Row,
-  Space,
-  Statistic,
+  Col,
+  Card,
+  List,
   Tag,
+  Avatar,
+  Space,
+  Button,
+  Statistic,
+  Progress,
 } from 'antd';
+import {
+  FileTextOutlined,
+  EyeOutlined,
+  LikeOutlined,
+  MessageOutlined,
+  TagOutlined,
+  FolderOutlined,
+  TrophyOutlined,
+  ClockCircleOutlined,
+  EditOutlined,
+} from '@ant-design/icons';
+import { articleAPI } from '@/services/article';
+import { categoryAPI } from '@/services/category';
+import { tagAPI } from '@/services/tag';
+import { history } from '@umijs/max';
+import type { DashboardStatsData, RecentArticle } from '@/types';
 import dayjs from 'dayjs';
-import React, { useEffect, useState } from 'react';
 
-interface DashboardStats {
-  totalArticles: number;
-  publishedArticles: number;
-  draftArticles: number;
-  totalViews: number;
-  totalLikes: number;
-  totalComments: number;
-  totalCategories: number;
-  totalTags: number;
-}
-
-interface RecentArticle {
-  id: number;
-  title: string;
-  status: string;
-  viewCount: number;
-  likeCount: number;
-  commentCount: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-const Home: React.FC = () => {
-  const [stats, setStats] = useState<DashboardStats>({
+const Dashboard: React.FC = () => {
+  const [stats, setStats] = useState<DashboardStatsData>({
     totalArticles: 0,
     publishedArticles: 0,
     draftArticles: 0,
@@ -71,13 +52,12 @@ const Home: React.FC = () => {
   const loadStats = async () => {
     try {
       setLoading(true);
-      const [articleStats, categoryStats, tagStats, recentRes] =
-        await Promise.all([
-          articleAPI.getStatistics(),
-          categoryAPI.getStatistics(),
-          tagAPI.getStatistics(),
-          articleAPI.getArticles({ limit: 10, page: 1 }),
-        ]);
+      const [articleStats, categoryStats, tagStats, recentRes] = await Promise.all([
+        articleAPI.getStatistics(),
+        categoryAPI.getStatistics(),
+        tagAPI.getStatistics(),
+        articleAPI.getArticles({ limit: 10, page: 1 }),
+      ]);
 
       setStats({
         totalArticles: articleStats?.total || 0,
@@ -90,7 +70,16 @@ const Home: React.FC = () => {
         totalTags: tagStats?.total || 0,
       });
 
-      setRecentArticles(recentRes?.items || []);
+      setRecentArticles((recentRes?.items || []).map(article => ({
+        id: parseInt(article.id) || 0,
+        title: article.title,
+        status: article.status,
+        viewCount: article.viewCount,
+        likeCount: article.likeCount,
+        commentCount: article.commentCount,
+        createdAt: article.createdAt,
+        updatedAt: article.updatedAt,
+      })));
     } catch (error) {
       console.error('加载统计数据失败:', error);
     } finally {
@@ -117,17 +106,20 @@ const Home: React.FC = () => {
   };
 
   // 计算发布率
-  const publishRate =
-    stats.totalArticles > 0
-      ? Math.round((stats.publishedArticles / stats.totalArticles) * 100)
-      : 0;
+  const publishRate = stats.totalArticles > 0 
+    ? Math.round((stats.publishedArticles / stats.totalArticles) * 100)
+    : 0;
 
   return (
     <PageContainer
       title="仪表板"
       subTitle="博客管理概览"
       extra={[
-        <Button key="refresh" onClick={loadStats} loading={loading}>
+        <Button
+          key="refresh"
+          onClick={loadStats}
+          loading={loading}
+        >
           刷新数据
         </Button>,
         <Button
@@ -263,7 +255,10 @@ const Home: React.FC = () => {
             title="最近文章"
             loading={loading}
             extra={
-              <Button type="link" onClick={() => history.push('/articles')}>
+              <Button
+                type="link"
+                onClick={() => history.push('/articles')}
+              >
                 查看全部
               </Button>
             }
@@ -289,35 +284,20 @@ const Home: React.FC = () => {
                       <Avatar
                         icon={<FileTextOutlined />}
                         style={{
-                          backgroundColor:
-                            statusColorMap[
-                              item.status as keyof typeof statusColorMap
-                            ] || '#1890ff',
+                          backgroundColor: statusColorMap[item.status as keyof typeof statusColorMap] || '#1890ff'
                         }}
                       />
                     }
                     title={
                       <div>
                         <span style={{ marginRight: 8 }}>{item.title}</span>
-                        <Tag
-                          color={
-                            statusColorMap[
-                              item.status as keyof typeof statusColorMap
-                            ]
-                          }
-                        >
-                          {
-                            statusTextMap[
-                              item.status as keyof typeof statusTextMap
-                            ]
-                          }
+                        <Tag color={statusColorMap[item.status as keyof typeof statusColorMap]}>
+                          {statusTextMap[item.status as keyof typeof statusTextMap]}
                         </Tag>
                       </div>
                     }
                     description={
-                      <Space
-                        split={<span style={{ color: '#d9d9d9' }}>|</span>}
-                      >
+                      <Space split={<span style={{ color: '#d9d9d9' }}>|</span>}>
                         <span>
                           <EyeOutlined /> {item.viewCount}
                         </span>
@@ -351,9 +331,7 @@ const Home: React.FC = () => {
                   onClick={() => history.push('/articles/create')}
                   style={{ textAlign: 'center', cursor: 'pointer' }}
                 >
-                  <EditOutlined
-                    style={{ fontSize: 32, color: '#1890ff', marginBottom: 8 }}
-                  />
+                  <EditOutlined style={{ fontSize: 32, color: '#1890ff', marginBottom: 8 }} />
                   <div>写新文章</div>
                 </Card>
               </Col>
@@ -363,9 +341,7 @@ const Home: React.FC = () => {
                   onClick={() => history.push('/articles?status=draft')}
                   style={{ textAlign: 'center', cursor: 'pointer' }}
                 >
-                  <ClockCircleOutlined
-                    style={{ fontSize: 32, color: '#faad14', marginBottom: 8 }}
-                  />
+                  <ClockCircleOutlined style={{ fontSize: 32, color: '#faad14', marginBottom: 8 }} />
                   <div>管理草稿</div>
                 </Card>
               </Col>
@@ -375,9 +351,7 @@ const Home: React.FC = () => {
                   onClick={() => history.push('/categories')}
                   style={{ textAlign: 'center', cursor: 'pointer' }}
                 >
-                  <FolderOutlined
-                    style={{ fontSize: 32, color: '#f5222d', marginBottom: 8 }}
-                  />
+                  <FolderOutlined style={{ fontSize: 32, color: '#f5222d', marginBottom: 8 }} />
                   <div>管理分类</div>
                 </Card>
               </Col>
@@ -387,10 +361,18 @@ const Home: React.FC = () => {
                   onClick={() => history.push('/tags')}
                   style={{ textAlign: 'center', cursor: 'pointer' }}
                 >
-                  <TagOutlined
-                    style={{ fontSize: 32, color: '#fa8c16', marginBottom: 8 }}
-                  />
+                  <TagOutlined style={{ fontSize: 32, color: '#fa8c16', marginBottom: 8 }} />
                   <div>管理标签</div>
+                </Card>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <Card
+                  hoverable
+                  onClick={() => history.push('/comments/list')}
+                  style={{ textAlign: 'center', cursor: 'pointer' }}
+                >
+                  <MessageOutlined style={{ fontSize: 32, color: '#52c41a', marginBottom: 8 }} />
+                  <div>管理评论</div>
                 </Card>
               </Col>
               <Col xs={24} sm={12} md={6}>
@@ -399,9 +381,7 @@ const Home: React.FC = () => {
                   onClick={() => history.push('/articles/statistics')}
                   style={{ textAlign: 'center', cursor: 'pointer' }}
                 >
-                  <TrophyOutlined
-                    style={{ fontSize: 32, color: '#722ed1', marginBottom: 8 }}
-                  />
+                  <TrophyOutlined style={{ fontSize: 32, color: '#722ed1', marginBottom: 8 }} />
                   <div>文章统计</div>
                 </Card>
               </Col>
@@ -413,4 +393,4 @@ const Home: React.FC = () => {
   );
 };
 
-export default Home;
+export default Dashboard;

@@ -1,4 +1,4 @@
-import { tagAPI } from '@/services';
+import { tagAPI } from '@/services/tag';
 import type { CreateTagDto, Tag as TagItem, UpdateTagDto } from '@/types';
 import { formatTimestamp } from '@/utils/format';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
@@ -15,13 +15,43 @@ import {
 import { Button, ColorPicker, Form, Popconfirm, Tag } from 'antd';
 import type { Color } from 'antd/es/color-picker';
 import React, { useRef, useState } from 'react';
+import { useApi, useErrorHandler } from '@/hooks';
+
+// 使用类型别名简化类型名称
+type TagFormData = CreateTagDto & UpdateTagDto;
+
 const TagList: React.FC = () => {
   const actionRef = useRef<ActionType>();
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [currentTag, setCurrentTag] = useState<TagItem | null>(null);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [createForm] = Form.useForm();
   const [editForm] = Form.useForm();
+
+  
+  // 获取标签列表API
+  const getTagsApi = useApi(tagAPI.getTags, {
+    silent: true, // ProTable会自己处理加载状态，不需要显示错误
+  });
+  
+  // 删除标签API
+  const deleteTagApi = useApi(tagAPI.deleteTag, {
+    showSuccessMessage: true,
+    successMessage: '删除标签成功',
+  });
+  
+  // 创建标签API
+  const createTagApi = useApi(tagAPI.createTag, {
+    showSuccessMessage: true,
+    successMessage: '创建标签成功',
+  });
+  
+  // 更新标签API
+  const updateTagApi = useApi(tagAPI.updateTag, {
+    showSuccessMessage: true,
+    successMessage: '更新标签成功',
+  });
 
   // 预设颜色
   const presetColors = [
@@ -41,53 +71,53 @@ const TagList: React.FC = () => {
 
   // 生成slug
   const generateSlug = (name: string) => {
-    if (!name) return '';
     return name
       .toLowerCase()
       .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
       .replace(/^-+|-+$/g, '');
   };
 
-  // 删除标签
+  // 删除标签 - 页面层专注业务逻辑，无需手动错误处理
   const handleDelete = async (id: string) => {
-    try {
-      await tagAPI.deleteTag(id);
+    const result = await deleteTagApi.request(id);
+    if (result) {
       actionRef.current?.reload();
-    } catch (error) {}
+    }
   };
 
-  // 创建标签
-  const handleCreate = async (values: CreateTagDto) => {
-    try {
-      await tagAPI.createTag({
-        ...values,
-        slug: values.slug || (values.name && generateSlug(values.name)),
-      });
+  // 创建标签 - 页面层专注业务逻辑，无需手动错误处理
+  const handleCreate = async (values: TagFormData) => {
+    const result = await createTagApi.request({
+      ...values,
+      slug: values.slug || generateSlug(values.name),
+    });
+    
+    if (result) {
       setCreateModalVisible(false);
       createForm.resetFields();
       actionRef.current?.reload();
       return true;
-    } catch (error) {
-      return false;
     }
+    return false;
   };
 
-  // 更新标签
-  const handleUpdate = async (values: UpdateTagDto) => {
+  // 更新标签 - 页面层专注业务逻辑，无需手动错误处理
+  const handleUpdate = async (values: TagFormData) => {
     if (!currentTag) return false;
-    try {
-      await tagAPI.updateTag(currentTag.id, {
-        ...values,
-        slug: values.slug || (values.name && generateSlug(values.name)),
-      });
+    
+    const result = await updateTagApi.request(currentTag.id.toString(), {
+      ...values,
+      slug: values.slug || generateSlug(values.name),
+    });
+    
+    if (result) {
       setEditModalVisible(false);
       setCurrentTag(null);
       editForm.resetFields();
       actionRef.current?.reload();
       return true;
-    } catch (error) {
-      return false;
     }
+    return false;
   };
 
   const columns: ProColumns<TagItem>[] = [
@@ -95,10 +125,12 @@ const TagList: React.FC = () => {
       title: '标签名称',
       dataIndex: 'name',
       width: 200,
-      render: (text) => <div>{text}</div>,
+      render: (text, record) => (
+        <Tag color={record.color || 'blue'}>{text}</Tag>
+      ),
     },
     {
-      title: 'Url别名',
+      title: 'Slug',
       dataIndex: 'slug',
       width: 150,
       copyable: true,
@@ -113,7 +145,6 @@ const TagList: React.FC = () => {
     {
       title: '颜色',
       dataIndex: 'color',
-      search: false,
       width: 100,
       render: (color) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -121,12 +152,12 @@ const TagList: React.FC = () => {
             style={{
               width: 20,
               height: 20,
-              backgroundColor: typeof color === 'string' ? color : '#1890ff',
+              backgroundColor: (color as string) || '#1890ff',
               borderRadius: 4,
               border: '1px solid #d9d9d9',
             }}
           />
-          <span>{color}</span>
+          <span>{color || '#1890ff'}</span>
         </div>
       ),
     },
@@ -148,13 +179,11 @@ const TagList: React.FC = () => {
     {
       title: '文章数量',
       dataIndex: 'articleCount',
-      search: false,
       width: 100,
       render: (count) => <Tag color="blue">{count}</Tag>,
     },
     {
       title: '创建时间',
-      search: false,
       dataIndex: 'createdAt',
       width: 150,
       valueType: 'dateTime',
@@ -199,7 +228,6 @@ const TagList: React.FC = () => {
         headerTitle="标签管理"
         actionRef={actionRef}
         rowKey="id"
-        scroll={{ x: 'auto' }}
         search={{
           labelWidth: 120,
         }}
@@ -213,29 +241,33 @@ const TagList: React.FC = () => {
             新建标签
           </Button>,
         ]}
-        request={async (params = {}) => {
-          try {
-            const { current, pageSize, ...restParams } = params;
-
-            const response = await tagAPI.getTags({
-              page: current,
-              limit: pageSize,
-              ...restParams,
-            });
+        request={async (params) => {
+          // 使用新的错误处理架构 - 页面层专注业务逻辑
+          const response = await getTagsApi.request({
+            page: params.current,
+            limit: params.pageSize,
+            search: params.name,
+          });
+          
+          if (response) {
             return {
               data: response.items || [],
               success: true,
               total: response.total || 0,
             };
-          } catch (error) {
-            return {
-              data: [],
-              success: false,
-              total: 0,
-            };
           }
+          
+          return {
+            data: [],
+            success: false,
+            total: 0,
+          };
         }}
         columns={columns}
+        rowSelection={{
+          selectedRowKeys,
+          onChange: (keys) => setSelectedRowKeys(keys as string[]),
+        }}
         pagination={{
           defaultPageSize: 10,
           showSizeChanger: true,
@@ -252,7 +284,6 @@ const TagList: React.FC = () => {
         onFinish={handleCreate}
         modalProps={{
           destroyOnClose: true,
-          maskClosable: false,
         }}
       >
         <ProFormText
@@ -263,6 +294,14 @@ const TagList: React.FC = () => {
             { required: true, message: '请输入标签名称' },
             { max: 30, message: '标签名称不能超过30个字符' },
           ]}
+          fieldProps={{
+            onChange: (e) => {
+              const name = e.target.value;
+              if (name && !createForm.getFieldValue('slug')) {
+                createForm.setFieldValue('slug', generateSlug(name));
+              }
+            },
+          }}
         />
 
         <ProFormText
@@ -297,7 +336,7 @@ const TagList: React.FC = () => {
           />
         </Form.Item>
 
-        <ProFormSwitch name="isActive" label="是否显示" initialValue={true} />
+        <ProFormSwitch name="isVisible" label="是否显示" initialValue={true} />
       </ModalForm>
 
       {/* 编辑标签弹窗 */}
@@ -362,7 +401,7 @@ const TagList: React.FC = () => {
           />
         </Form.Item>
 
-        <ProFormSwitch name="isActive" label="是否显示" />
+        <ProFormSwitch name="isVisible" label="是否显示" />
       </ModalForm>
     </PageContainer>
   );

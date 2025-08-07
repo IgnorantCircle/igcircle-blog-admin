@@ -1,21 +1,7 @@
-import type { RequestOptions } from '@umijs/max';
 import { request as umiRequest } from '@umijs/max';
 import { message } from 'antd';
-import type { ApiResponse, ErrorResponse } from '../types';
-
-/**
- * 请求配置接口
- */
-interface RequestConfig extends RequestOptions {
-  /** 是否显示错误消息 */
-  showError?: boolean;
-  /** 是否显示成功消息 */
-  showSuccess?: boolean;
-  /** 自定义成功消息 */
-  successMessage?: string;
-  /** 自定义错误消息 */
-  errorMessage?: string;
-}
+import type { ApiResponse, RequestConfig } from '@/types';
+import { HttpErrorHandler, type StandardError } from './errorHandler';
 
 /**
  * HTTP状态码枚举
@@ -38,10 +24,7 @@ class HttpClient {
   /**
    * 处理响应数据
    */
-  private handleResponse<T>(
-    response: ApiResponse<T>,
-    config: RequestConfig,
-  ): T {
+  private handleResponse<T>(response: ApiResponse<T>, config: RequestConfig): T {
     const { showSuccess = false, successMessage } = config;
 
     // 显示成功消息
@@ -55,57 +38,28 @@ class HttpClient {
 
   /**
    * 处理错误响应
+   * HTTP客户端层统一处理网络错误、状态码错误
    */
   private handleError(error: any, config: RequestConfig): never {
     const { showError = true, errorMessage } = config;
-    let errorMsg = errorMessage || '请求失败';
-
-    if (error?.response) {
-      const { status, data } = error.response;
-      const errorResponse = data as ErrorResponse;
-
-      switch (status) {
-        case HttpStatus.BAD_REQUEST:
-          errorMsg = errorResponse?.message || '请求参数错误';
-          if (errorResponse?.details?.length) {
-            errorMsg = errorResponse.details.join(', ');
-          }
-          break;
-        case HttpStatus.UNAUTHORIZED:
-          errorMsg = '登录已过期，请重新登录';
-          // 可以在这里处理登录跳转
-          setTimeout(() => {
-            window.location.href = '/login';
-          }, 1000);
-          break;
-        case HttpStatus.FORBIDDEN:
-          errorMsg = '没有权限访问该资源';
-          break;
-        case HttpStatus.NOT_FOUND:
-          errorMsg = '请求的资源不存在';
-          break;
-        case HttpStatus.INTERNAL_SERVER_ERROR:
-          errorMsg = '服务器内部错误';
-          break;
-        default:
-          errorMsg = errorResponse?.message || `请求失败 (${status})`;
-      }
-    } else if (error?.message) {
-      if (error.message.includes('Network Error')) {
-        errorMsg = '网络连接失败，请检查网络';
-      } else if (error.message.includes('timeout')) {
-        errorMsg = '请求超时，请稍后重试';
-      } else {
-        errorMsg = error.message;
-      }
+    
+    // 使用统一的错误处理器
+    const standardError: StandardError = HttpErrorHandler.handleHttpError(error);
+    
+    // 如果有自定义错误消息，使用自定义消息
+    if (errorMessage) {
+      standardError.message = errorMessage;
     }
-
-    // 显示错误消息
+    
+    // 显示错误消息（HTTP客户端层只处理网络层面的错误显示）
     if (showError) {
-      message.error(errorMsg);
+      message.error(standardError.message);
     }
 
-    throw new Error(errorMsg);
+    // 抛出标准化错误供上层处理
+    const error_to_throw = new Error(standardError.message) as any;
+    error_to_throw.standardError = standardError;
+    throw error_to_throw;
   }
 
   /**

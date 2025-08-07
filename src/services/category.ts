@@ -1,19 +1,17 @@
+import { http } from '../utils/request';
 import type {
   Category,
-  CategoryQueryDto,
-  CategoryStats,
   CreateCategoryDto,
-  PaginatedResponse,
   UpdateCategoryDto,
-} from '../types';
-import { http } from '../utils/request';
+  CategoryQueryDto,
+  PaginatedResponse,
+  CategoryStats,
+} from '@/types';
 
 // 分类相关API
 export const categoryAPI = {
   // 获取分类列表
-  getCategories: (
-    params?: CategoryQueryDto,
-  ): Promise<PaginatedResponse<Category>> => {
+  getCategories: (params?: CategoryQueryDto): Promise<PaginatedResponse<Category>> => {
     return http.get('/admin/categories', params);
   },
 

@@ -32,7 +32,7 @@ export const tagAPI = {
   },
 
   // 根据ID获取标签详情
-  getTag: (id: number): Promise<Tag> => {
+  getTag: (id: string): Promise<Tag> => {
     return http.get(`/admin/tags/${id}`);
   },
 

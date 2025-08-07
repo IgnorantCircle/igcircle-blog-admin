@@ -1,9 +1,10 @@
 import { authAPI } from '@/services';
 import { LoginDto } from '@/types';
+import rsaUtil from '@/utils/rsa';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { history } from '@umijs/max';
 import { Button, Card, Form, Input, message, Typography } from 'antd';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './index.less';
 
 const { Title } = Typography;
@@ -12,10 +13,37 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
+  // 组件挂载时获取RSA公钥
+  useEffect(() => {
+    const initRsaKey = async () => {
+      try {
+        const response = await authAPI.getRsaPublicKey();
+        rsaUtil.setPublicKey(response.publicKey);
+      } catch (error) {
+        console.error('获取RSA公钥失败:', error);
+        message.error('初始化加密失败，请刷新页面重试');
+      }
+    };
+
+    initRsaKey();
+  }, []);
+
   const handleSubmit = async (values: LoginDto) => {
     setLoading(true);
     try {
-      const response = await authAPI.login(values);
+      // 检查RSA公钥是否已设置
+      if (!rsaUtil.hasPublicKey()) {
+        message.error('加密初始化失败，请刷新页面重试');
+        return;
+      }
+
+      // 加密密码
+      const encryptedPassword = rsaUtil.encrypt(values.password);
+
+      const response = await authAPI.adminLogin({
+        ...values,
+        password: encryptedPassword,
+      });
 
       // 存储token和用户信息
       localStorage.setItem('token', response.access_token);
@@ -23,8 +51,8 @@ const Login: React.FC = () => {
 
       message.success('登录成功');
 
-      // 跳转到主页
-      history.push('/home');
+      // 跳转到仪表板
+      history.push('/dashboard');
     } catch (error: any) {
       console.error('登录失败:', error);
       message.error(error.message || '登录失败，请检查用户名和密码');

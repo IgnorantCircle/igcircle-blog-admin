@@ -1,43 +1,31 @@
+import React, { useRef, useState } from 'react';
 import {
-  DeleteOutlined,
-  EditOutlined,
+  PageContainer,
+  ProTable,
+  ActionType,
+  ProColumns,
+  ModalForm,
+  ProFormText,
+  ProFormSelect,
+} from '@ant-design/pro-components';
+import {
+  Button,
+  Tag,
+  Space,
+  Popconfirm,
+  message,
+  Avatar,
+  Form,
+} from 'antd';
+import {
   PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import {
-  ActionType,
-  ModalForm,
-  PageContainer,
-  ProColumns,
-  ProFormSelect,
-  ProFormText,
-  ProTable,
-} from '@ant-design/pro-components';
-import { Avatar, Button, Form, Popconfirm, Space, Tag, message } from 'antd';
-import dayjs from 'dayjs';
-import React, { useRef, useState } from 'react';
 import { userAPI } from '../../services';
-
-interface UserItem {
-  id: string;
-  username: string;
-  email: string;
-  nickname?: string;
-  avatar?: string;
-  role: 'user' | 'admin';
-  status: 'active' | 'inactive' | 'banned';
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface UserFormData {
-  username: string;
-  email: string;
-  password: string;
-  nickname?: string;
-  role: 'user' | 'admin';
-  status: 'active' | 'inactive' | 'banned';
-}
+import type { UserItem, UserFormData } from '@/types';
+import dayjs from 'dayjs';
 
 const UserList: React.FC = () => {
   const actionRef = useRef<ActionType>();
@@ -89,7 +77,7 @@ const UserList: React.FC = () => {
   // 更新用户
   const handleUpdate = async (values: Partial<UserFormData>) => {
     if (!currentUser) return false;
-
+    
     try {
       await userAPI.updateUser(currentUser.id, values);
       message.success('更新成功');
@@ -105,10 +93,7 @@ const UserList: React.FC = () => {
   };
 
   // 更新用户状态
-  const handleUpdateStatus = async (
-    id: string,
-    status: 'active' | 'inactive' | 'banned',
-  ) => {
+  const handleUpdateStatus = async (id: string, status: 'active' | 'inactive' | 'banned') => {
     try {
       await userAPI.updateUserStatus(id, { status });
       message.success('状态更新成功');
@@ -117,7 +102,6 @@ const UserList: React.FC = () => {
       message.error('状态更新失败');
     }
   };
-
   // 强制用户退出所有设备
   const handleForceLogout = async (id: string) => {
     try {
@@ -161,14 +145,14 @@ const UserList: React.FC = () => {
       width: 200,
       render: (_, record) => (
         <Space>
-          <Avatar src={record.avatar} icon={<UserOutlined />} size="small" />
+          <Avatar 
+            src={record.avatar} 
+            icon={<UserOutlined />} 
+            size="small"
+          />
           <div>
-            <div style={{ fontWeight: 500 }}>
-              {record.nickname || record.username}
-            </div>
-            <div style={{ fontSize: '12px', color: '#666' }}>
-              @{record.username}
-            </div>
+            <div style={{ fontWeight: 500 }}>{record.nickname || record.username}</div>
+            <div style={{ fontSize: '12px', color: '#666' }}>@{record.username}</div>
           </div>
         </Space>
       ),
@@ -189,7 +173,9 @@ const UserList: React.FC = () => {
         user: { text: '普通用户', status: 'Default' },
       },
       render: (_, record) => (
-        <Tag color={roleColorMap[record.role]}>{roleTextMap[record.role]}</Tag>
+        <Tag color={roleColorMap[record.role]}>
+          {roleTextMap[record.role]}
+        </Tag>
       ),
     },
     {
@@ -241,19 +227,19 @@ const UserList: React.FC = () => {
         </Button>,
         <Popconfirm
           key="status"
-          title={`确定要${
-            record.status === 'active' ? '禁用' : '启用'
-          }该用户吗？`}
-          onConfirm={() =>
-            handleUpdateStatus(
-              record.id,
-              record.status === 'active' ? 'inactive' : 'active',
-            )
-          }
+          title={`确定要${record.status === 'active' ? '禁用' : '启用'}该用户吗？`}
+          onConfirm={() => handleUpdateStatus(
+            record.id, 
+            record.status === 'active' ? 'inactive' : 'active'
+          )}
           okText="确定"
           cancelText="取消"
         >
-          <Button type="link" size="small" danger={record.status === 'active'}>
+          <Button
+            type="link"
+            size="small"
+            danger={record.status === 'active'}
+          >
             {record.status === 'active' ? '禁用' : '启用'}
           </Button>
         </Popconfirm>,
@@ -264,7 +250,11 @@ const UserList: React.FC = () => {
           okText="确定"
           cancelText="取消"
         >
-          <Button type="link" size="small" style={{ color: '#ff7a00' }}>
+          <Button
+            type="link"
+            size="small"
+            style={{ color: '#ff7a00' }}
+          >
             强制退出
           </Button>
         </Popconfirm>,
@@ -275,7 +265,12 @@ const UserList: React.FC = () => {
           okText="确定"
           cancelText="取消"
         >
-          <Button type="link" size="small" danger icon={<DeleteOutlined />}>
+          <Button
+            type="link"
+            size="small"
+            danger
+            icon={<DeleteOutlined />}
+          >
             删除
           </Button>
         </Popconfirm>,
@@ -309,7 +304,9 @@ const UserList: React.FC = () => {
               okText="确定"
               cancelText="取消"
             >
-              <Button danger>批量删除</Button>
+              <Button danger>
+                批量删除
+              </Button>
             </Popconfirm>
           ),
         ]}
@@ -320,9 +317,7 @@ const UserList: React.FC = () => {
               limit: params.pageSize,
               ...(params.username && { search: params.username }),
               ...(params.role && { role: params.role as 'user' | 'admin' }),
-              ...(params.status && {
-                status: params.status as 'active' | 'inactive' | 'banned',
-              }),
+              ...(params.status && { status: params.status as 'active' | 'inactive' | 'banned' }),
             });
             return {
               data: response.items || [],
@@ -367,13 +362,10 @@ const UserList: React.FC = () => {
           rules={[
             { required: true, message: '请输入用户名' },
             { min: 3, max: 20, message: '用户名长度为3-20个字符' },
-            {
-              pattern: /^[a-zA-Z0-9_]+$/,
-              message: '用户名只能包含字母、数字和下划线',
-            },
+            { pattern: /^[a-zA-Z0-9_]+$/, message: '用户名只能包含字母、数字和下划线' },
           ]}
         />
-
+        
         <ProFormText
           name="email"
           label="邮箱"
@@ -383,7 +375,7 @@ const UserList: React.FC = () => {
             { type: 'email', message: '请输入有效的邮箱地址' },
           ]}
         />
-
+        
         <ProFormText.Password
           name="password"
           label="密码"
@@ -393,13 +385,13 @@ const UserList: React.FC = () => {
             { min: 6, message: '密码长度至少6个字符' },
           ]}
         />
-
+        
         <ProFormText
           name="nickname"
           label="昵称"
           placeholder="请输入昵称（可选）"
         />
-
+        
         <ProFormSelect
           name="role"
           label="角色"
@@ -411,7 +403,7 @@ const UserList: React.FC = () => {
           ]}
           rules={[{ required: true, message: '请选择角色' }]}
         />
-
+        
         <ProFormSelect
           name="status"
           label="状态"
@@ -446,13 +438,10 @@ const UserList: React.FC = () => {
           rules={[
             { required: true, message: '请输入用户名' },
             { min: 3, max: 20, message: '用户名长度为3-20个字符' },
-            {
-              pattern: /^[a-zA-Z0-9_]+$/,
-              message: '用户名只能包含字母、数字和下划线',
-            },
+            { pattern: /^[a-zA-Z0-9_]+$/, message: '用户名只能包含字母、数字和下划线' },
           ]}
         />
-
+        
         <ProFormText
           name="email"
           label="邮箱"
@@ -462,13 +451,13 @@ const UserList: React.FC = () => {
             { type: 'email', message: '请输入有效的邮箱地址' },
           ]}
         />
-
+        
         <ProFormText
           name="nickname"
           label="昵称"
           placeholder="请输入昵称（可选）"
         />
-
+        
         <ProFormSelect
           name="role"
           label="角色"
@@ -479,7 +468,7 @@ const UserList: React.FC = () => {
           ]}
           rules={[{ required: true, message: '请选择角色' }]}
         />
-
+        
         <ProFormSelect
           name="status"
           label="状态"

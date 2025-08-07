@@ -1,5 +1,4 @@
-import { categoryAPI } from '@/services';
-import type { Category, CreateCategoryDto, UpdateCategoryDto } from '@/types';
+import { categoryAPI } from '@/services/category';
 import { formatTimestamp } from '@/utils/format';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import {
@@ -16,14 +15,17 @@ import {
 } from '@ant-design/pro-components';
 import { Button, Card, Col, Popconfirm, Row, Space, Tag, Tree } from 'antd';
 import type { DataNode } from 'antd/es/tree';
+import type { CategoryItem, CategoryFormData } from '@/types';
 import React, { useRef, useState } from 'react';
 
 const CategoryList: React.FC = () => {
   const actionRef = useRef<ActionType>();
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
-  const [currentCategory, setCurrentCategory] = useState<Category | null>(null);
-  const [categoryTree, setCategoryTree] = useState<Category[]>([]);
+  const [currentCategory, setCurrentCategory] = useState<CategoryItem | null>(
+    null,
+  );
+  const [categoryTree, setCategoryTree] = useState<CategoryItem[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'tree'>('table');
 
   // 生成slug
@@ -52,7 +54,7 @@ const CategoryList: React.FC = () => {
   };
 
   // 创建分类
-  const handleCreate = async (values: CreateCategoryDto) => {
+  const handleCreate = async (values: CategoryFormData) => {
     try {
       await categoryAPI.createCategory({
         ...values,
@@ -68,12 +70,12 @@ const CategoryList: React.FC = () => {
   };
 
   // 更新分类
-  const handleUpdate = async (values: UpdateCategoryDto) => {
+  const handleUpdate = async (values: CategoryFormData) => {
     if (!currentCategory) return false;
     try {
       await categoryAPI.updateCategory(currentCategory.id, {
         ...values,
-        slug: values.slug || (values.name && generateSlug(values.name)),
+        slug: values.slug || generateSlug(values.name),
       });
       setEditModalVisible(false);
       setCurrentCategory(null);
@@ -86,7 +88,7 @@ const CategoryList: React.FC = () => {
   };
 
   // 转换为树形数据
-  const convertToTreeData = (categories: Category[]): DataNode[] => {
+  const convertToTreeData = (categories: CategoryItem[]): DataNode[] => {
     return categories.map((category) => ({
       key: category.id,
       title: (
@@ -139,7 +141,7 @@ const CategoryList: React.FC = () => {
     }));
   };
 
-  const columns: ProColumns<Category>[] = [
+  const columns: ProColumns<CategoryItem>[] = [
     {
       title: '分类名称',
       dataIndex: 'name',
@@ -166,9 +168,9 @@ const CategoryList: React.FC = () => {
     },
     {
       title: '排序',
-      dataIndex: 'levelShow',
+      dataIndex: 'sortOrder',
       width: 80,
-      search: false,
+      sorter: true,
     },
     {
       title: '状态',
@@ -189,14 +191,12 @@ const CategoryList: React.FC = () => {
       title: '文章数量',
       dataIndex: 'articleCount',
       width: 100,
-      search: false,
       render: (count) => <Tag color="blue">{count}</Tag>,
     },
     {
       title: '创建时间',
       dataIndex: 'createdAt',
       width: 150,
-      search: false,
       valueType: 'dateTime',
       render: (_, record) => formatTimestamp(record.updatedAt),
     },
@@ -236,7 +236,7 @@ const CategoryList: React.FC = () => {
     <PageContainer>
       <Row gutter={16}>
         <Col span={viewMode === 'tree' ? 12 : 24}>
-          <ProTable<Category>
+          <ProTable<CategoryItem>
             headerTitle="分类管理"
             actionRef={actionRef}
             rowKey="id"
@@ -265,14 +265,13 @@ const CategoryList: React.FC = () => {
                 新建分类
               </Button>,
             ]}
-            request={async (params = {}) => {
-              const { current, pageSize, parent = {}, ...restParams } = params;
+            request={async (params) => {
+              console.log('pafes', params);
               try {
                 const response = await categoryAPI.getCategories({
-                  page: current,
-                  limit: pageSize,
-                  parentName: parent.name,
-                  ...restParams,
+                  page: params.current,
+                  limit: params.pageSize,
+                  ...(params.name && { search: params.name }),
                 });
                 return {
                   data: response.items || [],
@@ -317,7 +316,6 @@ const CategoryList: React.FC = () => {
         onFinish={handleCreate}
         modalProps={{
           destroyOnClose: true,
-          maskClosable: false,
         }}
       >
         <ProFormText
@@ -355,7 +353,7 @@ const CategoryList: React.FC = () => {
           request={async () => {
             try {
               const response = await categoryAPI.getCategories({ limit: 100 });
-              return (response.items || []).map((cat: Category) => ({
+              return (response.items || []).map((cat: CategoryItem) => ({
                 label: cat.name,
                 value: cat.id,
               }));
@@ -366,7 +364,7 @@ const CategoryList: React.FC = () => {
         />
 
         <ProFormDigit
-          name="levelShow"
+          name="sortOrder"
           label="排序"
           placeholder="请输入排序值"
           min={0}
@@ -426,8 +424,8 @@ const CategoryList: React.FC = () => {
             try {
               const response = await categoryAPI.getCategories({ limit: 100 });
               return (response.items || [])
-                .filter((cat: Category) => cat.id !== currentCategory?.id)
-                .map((cat: Category) => ({
+                .filter((cat: CategoryItem) => cat.id !== currentCategory?.id)
+                .map((cat: CategoryItem) => ({
                   label: cat.name,
                   value: cat.id,
                 }));
@@ -438,7 +436,7 @@ const CategoryList: React.FC = () => {
         />
 
         <ProFormDigit
-          name="levelShow"
+          name="sortOrder"
           label="排序"
           placeholder="请输入排序值"
           min={0}

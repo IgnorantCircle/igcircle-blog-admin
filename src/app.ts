@@ -1,12 +1,20 @@
-// 运行时配置
-import type { ErrorResponse, User } from '@/types';
+import type { RequestConfig } from '@umijs/max';
+import { message, Dropdown, Avatar, Space } from 'antd';
+import { UserOutlined, LogoutOutlined } from '@ant-design/icons';
 import type { AxiosRequestConfig, AxiosResponse } from '@umijs/max';
-import { RequestConfig } from '@umijs/max';
-import { message } from 'antd';
-export async function getInitialState(): Promise<{ userInfo?: User } | null> {
+import type {  User } from '@/types';
+import { authAPI } from '@/services';
+import { history } from '@umijs/max';
+import React from 'react';
+
+// 运行时配置
+
+// 全局初始化数据配置，用于 Layout 用户信息和权限初始化
+// 更多信息见文档：https://umijs.org/docs/api/runtime-config#getinitialstate
+export async function getInitialState(): Promise<{ userInfo?:User } | null> {
   // 检查是否存在token
   const token = localStorage.getItem('token');
-  const userInfo = localStorage.getItem('userInfo') ?? '';
+  const userInfo = localStorage.getItem('userInfo') ?? "";
 
   if (token && userInfo) {
     try {
@@ -22,14 +30,69 @@ export async function getInitialState(): Promise<{ userInfo?: User } | null> {
     }
   }
 
-  return { userInfo: JSON.parse(userInfo) };
+  return { userInfo:JSON.parse(userInfo)};
 }
 
 export const layout = () => {
+  // 退出登录处理函数
+  const handleLogout = async () => {
+    try {
+      await authAPI.logout();
+      message.success('退出登录成功');
+    } catch (error) {
+      console.error('退出登录失败:', error);
+    } finally {
+      // 清除本地存储
+      localStorage.removeItem('token');
+      localStorage.removeItem('userInfo');
+      // 跳转到登录页
+      history.push('/login');
+    }
+  };
+
+  // 获取用户信息
+  const userInfo = localStorage.getItem('userInfo');
+  const user = userInfo ? JSON.parse(userInfo) : null;
+
+  // 用户菜单项
+  const userMenuItems = [
+    {
+      key: 'logout',
+      icon: React.createElement(LogoutOutlined),
+      label: '退出登录',
+      onClick: handleLogout,
+    },
+  ];
+
   return {
     logo: 'https://img.alicdn.com/tfs/TB1YHEpwUT1gK0jSZFhXXaAtVXa-28-27.svg',
     menu: {
       locale: false,
+    },
+    rightContentRender: () => {
+      if (!user) return null;
+      
+      return React.createElement(
+        Space,
+        { size: 'middle' },
+        React.createElement(
+          Dropdown,
+          {
+            menu: { items: userMenuItems },
+            placement: 'topRight',
+            arrow: true,
+          },
+          React.createElement(
+            Space,
+            { style: { cursor: 'pointer' } },
+            React.createElement(Avatar, {
+              size: 'small',
+              icon: React.createElement(UserOutlined),
+            }),
+            React.createElement('span', null, user.username || '管理员')
+          )
+        )
+      );
     },
   };
 };
@@ -40,7 +103,9 @@ export const request: RequestConfig = {
   timeout: 10000,
 
   // 请求基础URL
-  baseURL: process.env.API_BASE_URL || 'http://localhost:7001/api',
+  baseURL:
+    process.env.NODE_ENV === 'development' ? 'http://localhost:5001/api' : '',
+
   // 请求头配置
   headers: {
     'Content-Type': 'application/json',
@@ -86,7 +151,7 @@ export const request: RequestConfig = {
     },
   ],
 
-  // 错误处理
+  // 错误处理配置（简化版，主要错误处理已移至HTTP客户端层和Hook层）
   errorConfig: {
     // 错误抛出
     errorThrower: (res) => {
@@ -100,58 +165,18 @@ export const request: RequestConfig = {
       }
     },
 
-    // 错误接收及处理
+    // 错误接收及处理（简化版，主要用于兜底）
     errorHandler: (error: any, opts: any) => {
       if (opts?.skipErrorHandler) throw error;
-
-      let errorMessage = '请求失败';
-
-      if (error.response) {
-        const { status, data } = error.response;
-        const errorResponse = data as ErrorResponse;
-
-        switch (status) {
-          case 400:
-            errorMessage = errorResponse?.message || '请求参数错误';
-            if (errorResponse?.details?.length) {
-              errorMessage = errorResponse.details.join(', ');
-            }
-            break;
-          case 401:
-            errorMessage = '登录已过期，请重新登录';
-            // 清除本地存储的认证信息
-            localStorage.removeItem('token');
-            localStorage.removeItem('userInfo');
-            // 跳转到登录页
-            setTimeout(() => {
-              window.location.href = '/login';
-            }, 1000);
-            break;
-          case 403:
-            errorMessage = '没有权限访问该资源';
-            break;
-          case 404:
-            errorMessage = '请求的资源不存在';
-            break;
-          case 500:
-            errorMessage = '服务器内部错误';
-            break;
-          default:
-            errorMessage = errorResponse?.message || `请求失败 (${status})`;
-        }
-      } else if (error.message) {
-        if (error.message.includes('Network Error')) {
-          errorMessage = '网络连接失败，请检查网络';
-        } else if (error.message.includes('timeout')) {
-          errorMessage = '请求超时，请稍后重试';
-        } else {
-          errorMessage = error.message;
-        }
+      
+      // 如果错误已经被HTTP客户端层处理过，直接抛出
+      if (error?.standardError) {
+        throw error;
       }
-
-      // 显示错误消息
-      message.error(errorMessage);
-
+      
+      // 兜底错误处理
+      console.error('Unhandled error:', error);
+      message.error('系统错误，请稍后重试');
       throw error;
     },
   },
