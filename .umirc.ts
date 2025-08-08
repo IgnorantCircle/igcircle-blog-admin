@@ -49,6 +49,11 @@ export default defineConfig({
           component: './Articles/Preview',
           hideInMenu: true,
         },
+        {
+          path: '/articles/import',
+          component: './Articles/Import',
+          hideInMenu: true,
+        },
       ],
     },
     {

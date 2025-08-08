@@ -1,9 +1,12 @@
 import type {
   Article,
+  ArticleImportResponseDto,
   ArticleQueryDto,
   CreateArticleDto,
+  ImportProgressDto,
   PaginatedResponse,
   PublishArticleDto,
+  StartImportResponseDto,
   UpdateArticleDto,
 } from '@/types';
 import { http } from '@/utils/request';
@@ -96,5 +99,46 @@ export const articleAPI = {
   // 批量删除文章
   batchDeleteArticles: (data: { ids: string[] }): Promise<void> => {
     return http.delete('/admin/articles/batch', data);
+  },
+
+  // 文章导入相关API
+  // 同步导入文章
+  importArticles: (formData: FormData): Promise<ArticleImportResponseDto> => {
+    return http.post('/admin/articles/import', formData);
+  },
+
+  // 异步导入文章
+  importArticlesAsync: (
+    formData: FormData,
+  ): Promise<StartImportResponseDto> => {
+    return http.post('/admin/articles/import/async', formData);
+  },
+
+  // 获取导入进度
+  getImportProgress: (taskId: string): Promise<ImportProgressDto> => {
+    return http.get(`/admin/articles/import/progress/${taskId}`);
+  },
+
+  // 验证文章文件
+  validateFiles: (
+    files: File[],
+  ): Promise<{
+    totalFiles: number;
+    validFiles: number;
+    invalidFiles: number;
+    results: {
+      filename: string;
+      isValid: boolean;
+      errors: string[];
+      warnings: string[];
+      title?: string;
+      hasContent: boolean;
+    }[];
+  }> => {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append('files', file);
+    });
+    return http.post('/admin/articles/import/validate', formData);
   },
 };
