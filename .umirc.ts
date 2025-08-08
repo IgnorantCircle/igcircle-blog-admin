@@ -64,6 +64,27 @@ export default defineConfig({
       icon: 'TagOutlined',
     },
     {
+      name: '评论管理',
+      path: '/comments',
+      icon: 'MessageOutlined',
+      routes: [
+        {
+          path: '/comments',
+          redirect: '/comments/list',
+        },
+        {
+          path: '/comments/list',
+          name: '评论列表',
+          component: './Comments',
+        },
+        {
+          path: '/comments/statistics',
+          name: '评论统计',
+          component: './Comments/Statistics',
+        },
+      ],
+    },
+    {
       name: '用户管理',
       path: '/users',
       component: './Users',

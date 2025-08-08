@@ -2,5 +2,6 @@
 export { articleAPI } from './article';
 export { authAPI } from './auth';
 export { categoryAPI } from './category';
+export { commentAPI } from './comment';
 export { tagAPI } from './tag';
 export { userAPI } from './user';
