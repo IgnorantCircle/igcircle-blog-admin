@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { useAsyncState, type AsyncOptions } from './useAsyncState';
-
 /**
  * API请求配置
  */
@@ -19,7 +18,7 @@ export interface ApiOptions extends AsyncOptions {
  */
 export const useApi = <T = any>(
   apiFunction?: (...args: any[]) => Promise<T>,
-  options?: ApiOptions
+  options?: ApiOptions,
 ) => {
   const {
     autoRetry = false,
@@ -38,13 +37,13 @@ export const useApi = <T = any>(
       } catch (error) {
         if (autoRetry && currentRetry < retryCount) {
           // 延迟后重试
-          await new Promise(resolve => setTimeout(resolve, retryDelay));
+          await new Promise((resolve) => setTimeout(resolve, retryDelay));
           return executeWithRetry(fn, currentRetry + 1);
         }
         throw error;
       }
     },
-    [autoRetry, retryCount, retryDelay]
+    [autoRetry, retryCount, retryDelay],
   );
 
   const asyncState = useAsyncState<T>(undefined, asyncOptions);
@@ -60,22 +59,25 @@ export const useApi = <T = any>(
       }
 
       const apiCall = () => apiFunction(...args);
-      
+
       return asyncState.execute(() => executeWithRetry(apiCall));
     },
-    [apiFunction, asyncState.execute, executeWithRetry]
+    [apiFunction, asyncState.execute, executeWithRetry],
   );
 
   /**
    * 执行自定义API请求
    */
   const customRequest = useCallback(
-    async <R = any>(customApiFunction: (...args: any[]) => Promise<R>, ...args: any[]) => {
+    async <R = any>(
+      customApiFunction: (...args: any[]) => Promise<R>,
+      ...args: any[]
+    ) => {
       const apiCall = () => customApiFunction(...args);
-      
+
       return asyncState.execute(() => executeWithRetry(apiCall)) as Promise<R>;
     },
-    [asyncState.execute, executeWithRetry]
+    [asyncState.execute, executeWithRetry],
   );
 
   return {
@@ -93,7 +95,7 @@ export const useApi = <T = any>(
  */
 export const createApiHook = <T = any>(
   apiFunction: (...args: any[]) => Promise<T>,
-  defaultOptions?: ApiOptions
+  defaultOptions?: ApiOptions,
 ) => {
   return (options?: ApiOptions) => {
     const mergedOptions = { ...defaultOptions, ...options };
@@ -113,11 +115,11 @@ export const useBatchApi = <T = any>(options?: ApiOptions) => {
   const batchRequest = useCallback(
     async (apiCalls: (() => Promise<any>)[]) => {
       return asyncState.execute(async () => {
-        const results = await Promise.all(apiCalls.map(call => call()));
+        const results = await Promise.all(apiCalls.map((call) => call()));
         return results;
       });
     },
-    [asyncState.execute]
+    [asyncState.execute],
   );
 
   /**
@@ -127,16 +129,16 @@ export const useBatchApi = <T = any>(options?: ApiOptions) => {
     async (apiCalls: (() => Promise<any>)[]) => {
       return asyncState.execute(async () => {
         const results: any[] = [];
-        
+
         for (let i = 0; i < apiCalls.length; i++) {
           const result = await apiCalls[i]();
           results.push(result);
         }
-        
+
         return results;
       });
     },
-    [asyncState.execute]
+    [asyncState.execute],
   );
 
   return {

@@ -58,6 +58,15 @@ export const userAPI = {
     return http.get('/admin/users/stats');
   },
 
+  // 获取用户在线状态
+  getUserOnlineStatus: (id: string): Promise<{
+    userId: string;
+    onlineStatus: string;
+    lastActiveAt: number | null;
+  }> => {
+    return http.get(`/admin/users/${id}/online-status`);
+  },
+
   // 强制用户退出所有设备
   forceLogoutUser: (id: string): Promise<{ message: string }> => {
     return http.post(`/admin/users/${id}/logout-all`);

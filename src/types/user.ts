@@ -9,6 +9,9 @@ export interface User extends BaseEntity {
   bio?: string;
   role: 'admin' | 'user';
   status: 'active' | 'inactive' | 'banned';
+  onlineStatus?: 'online' | 'offline' | 'away';
+  lastActiveAt?: string | null;
+  emailVerified?: boolean;
 }
 
 // 创建用户DTO
@@ -50,6 +53,9 @@ export interface UserStats {
   banned: number;
   admins: number;
   users: number;
+  onlineUsers: number;
+  emailVerifiedUsers: number;
+  recentRegistrations: User[];
 }
 
 // 用户列表项类型（用于页面组件）
@@ -61,6 +67,9 @@ export interface UserItem {
   avatar?: string;
   role: 'user' | 'admin';
   status: 'active' | 'inactive' | 'banned';
+  onlineStatus?: 'online' | 'offline' | 'away';
+  lastActiveAt?: string | null;
+  emailVerified?: boolean;
   createdAt: string;
   updatedAt: string;
 }

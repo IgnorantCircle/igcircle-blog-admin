@@ -24,6 +24,9 @@ export interface DashboardStatsData {
   totalComments: number;
   totalCategories: number;
   totalTags: number;
+  totalUsers: number;
+  onlineUsers: number;
+  activeUsers: number;
 }
 
 // 最近文章类型（用于页面组件）

@@ -138,6 +138,20 @@ const UserList: React.FC = () => {
     user: '普通用户',
   };
 
+  // 在线状态颜色映射
+  const onlineStatusColorMap = {
+    online: 'green',
+    offline: 'default',
+    away: 'orange',
+  };
+
+  // 在线状态文本映射
+  const onlineStatusTextMap = {
+    online: '在线',
+    offline: '离线',
+    away: '离开',
+  };
+
   const columns: ProColumns<UserItem>[] = [
     {
       title: '用户信息',
@@ -162,6 +176,19 @@ const UserList: React.FC = () => {
       dataIndex: 'email',
       width: 200,
       copyable: true,
+      render: (_, record) => (
+        <Space direction="vertical" size={0}>
+          <span>{record.email}</span>
+          {record.emailVerified !== undefined && (
+            <Tag 
+              size="small" 
+              color={record.emailVerified ? 'green' : 'orange'}
+            >
+              {record.emailVerified ? '已验证' : '未验证'}
+            </Tag>
+          )}
+        </Space>
+      ),
     },
     {
       title: '角色',
@@ -181,7 +208,7 @@ const UserList: React.FC = () => {
     {
       title: '状态',
       dataIndex: 'status',
-      width: 100,
+      width: 120,
       valueType: 'select',
       valueEnum: {
         active: { text: '正常', status: 'Success' },
@@ -189,9 +216,19 @@ const UserList: React.FC = () => {
         banned: { text: '已封禁', status: 'Error' },
       },
       render: (_, record) => (
-        <Tag color={statusColorMap[record.status]}>
-          {statusTextMap[record.status]}
-        </Tag>
+        <Space direction="vertical" size={0}>
+          <Tag color={statusColorMap[record.status]}>
+            {statusTextMap[record.status]}
+          </Tag>
+          {record.onlineStatus && (
+            <Tag 
+              size="small" 
+              color={onlineStatusColorMap[record.onlineStatus]}
+            >
+              {onlineStatusTextMap[record.onlineStatus]}
+            </Tag>
+          )}
+        </Space>
       ),
     },
     {

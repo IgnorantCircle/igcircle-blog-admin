@@ -102,8 +102,8 @@ export const layout = () => {
 
 // 全局请求配置
 export const request: RequestConfig = {
-  // 请求超时时间
-  timeout: 10000,
+  // 请求超时时间1分钟
+  timeout: 60000,
 
   // 请求基础URL
   baseURL: process.env.NODE_ENV === 'development' ? baseUrl : '',

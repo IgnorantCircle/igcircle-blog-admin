@@ -26,10 +26,13 @@ import {
   TrophyOutlined,
   ClockCircleOutlined,
   EditOutlined,
+  UserOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 import { articleAPI } from '@/services/article';
 import { categoryAPI } from '@/services/category';
 import { tagAPI } from '@/services/tag';
+import { userAPI } from '@/services/user';
 import { history } from '@umijs/max';
 import type { DashboardStatsData, RecentArticle } from '@/types';
 import dayjs from 'dayjs';
@@ -44,6 +47,9 @@ const Dashboard: React.FC = () => {
     totalComments: 0,
     totalCategories: 0,
     totalTags: 0,
+    totalUsers: 0,
+    onlineUsers: 0,
+    activeUsers: 0,
   });
   const [recentArticles, setRecentArticles] = useState<RecentArticle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,10 +58,11 @@ const Dashboard: React.FC = () => {
   const loadStats = async () => {
     try {
       setLoading(true);
-      const [articleStats, categoryStats, tagStats, recentRes] = await Promise.all([
+      const [articleStats, categoryStats, tagStats, userStats, recentRes] = await Promise.all([
         articleAPI.getStatistics(),
         categoryAPI.getStatistics(),
         tagAPI.getStatistics(),
+        userAPI.getUserStats(),
         articleAPI.getArticles({ limit: 10, page: 1 }),
       ]);
 
@@ -68,6 +75,9 @@ const Dashboard: React.FC = () => {
         totalComments: articleStats?.totalComments || 0,
         totalCategories: categoryStats?.total || 0,
         totalTags: tagStats?.total || 0,
+        totalUsers: userStats?.total || 0,
+        onlineUsers: userStats?.onlineUsers || 0,
+        activeUsers: userStats?.active || 0,
       });
 
       setRecentArticles((recentRes?.items || []).map(article => ({
@@ -213,6 +223,40 @@ const Dashboard: React.FC = () => {
               title: '标签数',
               value: stats.totalTags,
               icon: <TagOutlined style={{ color: '#fa8c16' }} />,
+            }}
+            loading={loading}
+          />
+        </Col>
+      </Row>
+
+      {/* 用户统计 */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} md={8}>
+          <StatisticCard
+            statistic={{
+              title: '总用户数',
+              value: stats.totalUsers,
+              icon: <TeamOutlined style={{ color: '#1890ff' }} />,
+            }}
+            loading={loading}
+          />
+        </Col>
+        <Col xs={24} sm={12} md={8}>
+          <StatisticCard
+            statistic={{
+              title: '在线用户',
+              value: stats.onlineUsers,
+              icon: <UserOutlined style={{ color: '#52c41a' }} />,
+            }}
+            loading={loading}
+          />
+        </Col>
+        <Col xs={24} sm={12} md={8}>
+          <StatisticCard
+            statistic={{
+              title: '活跃用户',
+              value: stats.activeUsers,
+              icon: <UserOutlined style={{ color: '#faad14' }} />,
             }}
             loading={loading}
           />
