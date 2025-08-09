@@ -1,4 +1,8 @@
 import { defineConfig } from '@umijs/max';
+import { config } from 'dotenv';
+
+// 加载环境变量
+config({ path: '.env.development' });
 
 export default defineConfig({
   antd: {},
@@ -6,6 +10,11 @@ export default defineConfig({
   model: {},
   initialState: {},
   request: {},
+  define: {
+    'process.env.REACT_APP_API_BASE_URL': process.env.REACT_APP_API_BASE_URL,
+    'process.env.NODE_ENV': process.env.NODE_ENV,
+    'process.env.PORT': process.env.PORT,
+  },
   layout: {
     title: 'igCircle Blog',
   },

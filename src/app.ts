@@ -1,20 +1,23 @@
-import type { RequestConfig } from '@umijs/max';
-import { message, Dropdown, Avatar, Space } from 'antd';
-import { UserOutlined, LogoutOutlined } from '@ant-design/icons';
-import type { AxiosRequestConfig, AxiosResponse } from '@umijs/max';
-import type {  User } from '@/types';
 import { authAPI } from '@/services';
+import type { User } from '@/types';
+import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
+import type {
+  AxiosRequestConfig,
+  AxiosResponse,
+  RequestConfig,
+} from '@umijs/max';
 import { history } from '@umijs/max';
+import { Avatar, Dropdown, message, Space } from 'antd';
 import React from 'react';
-
+const baseUrl = process.env.REACT_APP_API_BASE_URL;
 // 运行时配置
 
 // 全局初始化数据配置，用于 Layout 用户信息和权限初始化
 // 更多信息见文档：https://umijs.org/docs/api/runtime-config#getinitialstate
-export async function getInitialState(): Promise<{ userInfo?:User } | null> {
+export async function getInitialState(): Promise<{ userInfo?: User } | null> {
   // 检查是否存在token
   const token = localStorage.getItem('token');
-  const userInfo = localStorage.getItem('userInfo') ?? "";
+  const userInfo = localStorage.getItem('userInfo') ?? '';
 
   if (token && userInfo) {
     try {
@@ -30,7 +33,7 @@ export async function getInitialState(): Promise<{ userInfo?:User } | null> {
     }
   }
 
-  return { userInfo:JSON.parse(userInfo)};
+  return { userInfo: JSON.parse(userInfo) };
 }
 
 export const layout = () => {
@@ -71,7 +74,7 @@ export const layout = () => {
     },
     rightContentRender: () => {
       if (!user) return null;
-      
+
       return React.createElement(
         Space,
         { size: 'middle' },
@@ -89,9 +92,9 @@ export const layout = () => {
               size: 'small',
               icon: React.createElement(UserOutlined),
             }),
-            React.createElement('span', null, user.username || '管理员')
-          )
-        )
+            React.createElement('span', null, user.username || '管理员'),
+          ),
+        ),
       );
     },
   };
@@ -103,8 +106,7 @@ export const request: RequestConfig = {
   timeout: 10000,
 
   // 请求基础URL
-  baseURL:
-    process.env.NODE_ENV === 'development' ? 'http://localhost:5001/api' : '',
+  baseURL: process.env.NODE_ENV === 'development' ? baseUrl : '',
 
   // 请求头配置
   headers: {
@@ -168,14 +170,13 @@ export const request: RequestConfig = {
     // 错误接收及处理（简化版，主要用于兜底）
     errorHandler: (error: any, opts: any) => {
       if (opts?.skipErrorHandler) throw error;
-      
+
       // 如果错误已经被HTTP客户端层处理过，直接抛出
       if (error?.standardError) {
         throw error;
       }
-      
+
       // 兜底错误处理
-      console.error('Unhandled error:', error);
       message.error('系统错误，请稍后重试');
       throw error;
     },
