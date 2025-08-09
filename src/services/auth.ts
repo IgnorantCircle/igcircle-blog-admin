@@ -52,6 +52,6 @@ export const authAPI = {
 
   // 获取RSA公钥
   getRsaPublicKey: (): Promise<{ publicKey: string }> => {
-    return http.get('/auth/rsa/public-key');
+    return http.get('/rsa/public-key');
   },
 };

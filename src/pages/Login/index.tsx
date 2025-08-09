@@ -46,13 +46,13 @@ const Login: React.FC = () => {
       });
 
       // 存储token和用户信息
-      localStorage.setItem('token', response.access_token);
+      localStorage.setItem('token', response.accessToken);
       localStorage.setItem('userInfo', JSON.stringify(response.user));
 
       message.success('登录成功');
 
       // 跳转到仪表板
-      history.push('/dashboard');
+      history.push('/home');
     } catch (error: any) {
       console.error('登录失败:', error);
       message.error(error.message || '登录失败，请检查用户名和密码');

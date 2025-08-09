@@ -18,7 +18,6 @@ export async function getInitialState(): Promise<{ userInfo?: User } | null> {
   // 检查是否存在token
   const token = localStorage.getItem('token');
   const userInfo = localStorage.getItem('userInfo') ?? '';
-
   if (token && userInfo) {
     try {
       // 如果在登录相关页面，不进行跳转
@@ -118,6 +117,7 @@ export const request: RequestConfig = {
     (config: AxiosRequestConfig) => {
       // 添加认证token
       const token = localStorage.getItem('token');
+
       if (token) {
         config.headers = {
           ...config.headers,

@@ -22,6 +22,6 @@ export interface SendVerificationCodeDto {
 
 // 认证响应接口
 export interface AuthResponse {
-  access_token: string;
+  accessToken: string;
   user: Pick<User, 'id' | 'username' | 'email' | 'nickname' | 'role'>;
 }
