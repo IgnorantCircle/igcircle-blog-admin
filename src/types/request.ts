@@ -11,6 +11,8 @@ export interface RequestConfig extends RequestOptions {
   successMessage?: string;
   /** 自定义错误消息 */
   errorMessage?: string;
+  /** 是否启用自动参数过滤，默认为true */
+  autoFilterParams?: boolean;
 }
 
 // 异步操作状态接口
