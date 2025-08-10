@@ -1,5 +1,5 @@
 import { articleAPI } from '@/services/article';
-import type { Article } from '@/types';
+import type { ArticleType } from '@/types';
 import {
   ArrowLeftOutlined,
   CalendarOutlined,
@@ -10,7 +10,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { PageContainer, ProCard } from '@ant-design/pro-components';
-import MDEditor from '@uiw/react-md-editor';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
 import { history, useParams } from '@umijs/max';
 import {
   Alert,
@@ -25,13 +25,12 @@ import {
   Typography,
 } from 'antd';
 import React, { useEffect, useState } from 'react';
-import './Preview.less';
 
 const { Title, Paragraph, Text } = Typography;
 
 const ArticlePreview: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [article, setArticle] = useState<Article | null>(null);
+  const [article, setArticle] = useState<ArticleType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const fetchArticle = async (articleId: string) => {
@@ -283,7 +282,7 @@ const ArticlePreview: React.FC = () => {
 
         {/* 文章内容 */}
         <div className="article-content">
-          <MDEditor.Markdown
+          <MarkdownRenderer
             source={article.content}
             style={{
               lineHeight: '1.8',

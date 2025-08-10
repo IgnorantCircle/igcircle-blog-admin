@@ -1,0 +1,153 @@
+// 代码块容器样式
+.code-block-container {
+  margin: 16px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e1e4e8;
+  background: #f6f8fa;
+
+  // 代码块头部
+  .code-block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background: #f1f3f4;
+    border-bottom: 1px solid #e1e4e8;
+
+    .code-block-language {
+      font-size: 12px;
+      font-weight: 600;
+      color: #586069;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .code-block-copy-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: #586069;
+
+      &:hover {
+        color: #0366d6;
+        background: rgba(3, 102, 214, 0.1);
+      }
+
+      .anticon {
+        font-size: 12px;
+      }
+    }
+  }
+
+  // 代码内容区域
+  pre {
+    margin: 0 !important;
+    code {
+      background: transparent !important;
+      padding: 0 !important;
+    }
+    &::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #f1f3f4;
+      border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #c1c8cd;
+      border-radius: 4px;
+
+      &:hover {
+        background: #a8b2ba;
+      }
+    }
+  }
+
+  // 行号样式优化
+  .linenumber {
+    color: #6a737d !important;
+    background: transparent !important;
+    border-right: 1px solid #e1e4e8 !important;
+    padding-right: 8px !important;
+    margin-right: 8px !important;
+  }
+}
+
+// 暗色主题支持
+@media (prefers-color-scheme: dark) {
+  .code-block-container {
+    border-color: #30363d;
+    background: #0d1117;
+
+    .code-block-header {
+      background: #161b22;
+      border-bottom-color: #30363d;
+
+      .code-block-language {
+        color: #8b949e;
+      }
+
+      .code-block-copy-btn {
+        color: #8b949e;
+
+        &:hover {
+          color: #58a6ff;
+          background: rgba(88, 166, 255, 0.1);
+        }
+      }
+    }
+
+    .linenumber {
+      color: #6e7681 !important;
+      border-right-color: #30363d !important;
+    }
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .code-block-container {
+    margin: 12px 0;
+
+    .code-block-header {
+      padding: 6px 12px;
+
+      .code-block-language {
+        font-size: 11px;
+      }
+
+      .code-block-copy-btn {
+        font-size: 11px;
+
+        .anticon {
+          font-size: 11px;
+        }
+      }
+    }
+
+    pre {
+      font-size: 13px !important;
+    }
+  }
+}
+
+
+@media (prefers-color-scheme: dark) {
+  .code-block-container pre {
+    &::-webkit-scrollbar-track {
+      background: #161b22;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #484f58;
+
+      &:hover {
+        background: #6e7681;
+      }
+    }
+  }
+}
