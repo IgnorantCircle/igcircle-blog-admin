@@ -1,20 +1,20 @@
 import type { BaseEntity, PaginationParams } from './common';
 
 // 分类实体接口
-export interface Category extends BaseEntity {
+export interface CategoryType extends BaseEntity {
   name: string;
   slug: string;
   description?: string;
   parentId?: string;
-  parent?: Category;
-  children?: Category[];
+  parent?: CategoryType;
+  children?: CategoryType[];
   sortOrder: number;
   isActive: boolean;
   articleCount: number;
 }
 
-// 创建分类DTO
-export interface CreateCategoryDto {
+// 创建分类Type
+export interface CreateCategoryType {
   name: string;
   slug?: string;
   description?: string;
@@ -23,8 +23,8 @@ export interface CreateCategoryDto {
   isActive?: boolean;
 }
 
-// 更新分类DTO
-export interface UpdateCategoryDto {
+// 更新分类Type
+export interface UpdateCategoryType {
   name?: string;
   slug?: string;
   description?: string;
@@ -33,14 +33,14 @@ export interface UpdateCategoryDto {
   isActive?: boolean;
 }
 
-// 分类查询DTO
-export interface CategoryQueryDto extends PaginationParams {
+// 分类查询Type
+export interface CategoryQueryType extends PaginationParams {
   parentId?: string;
   isActive?: boolean;
 }
 
 // 分类统计接口
-export interface CategoryStats {
+export interface CategoryStatsType {
   total: number;
   active: number;
   inactive: number;
@@ -48,7 +48,7 @@ export interface CategoryStats {
 }
 
 // 分类列表项类型（用于页面组件）
-export interface CategoryItem {
+export interface CategoryItemType {
   id: string;
   name: string;
   slug: string;
@@ -58,7 +58,7 @@ export interface CategoryItem {
     id: string;
     name: string;
   };
-  children?: CategoryItem[];
+  children?: CategoryItemType[];
   sortOrder: number;
   isActive: boolean;
   articleCount: number;
@@ -67,7 +67,7 @@ export interface CategoryItem {
 }
 
 // 分类表单数据类型（用于页面组件）
-export interface CategoryFormData {
+export interface CategoryFormDataType {
   name: string;
   slug?: string;
   description?: string;

@@ -1,7 +1,7 @@
 import type { BaseEntity, PaginationParams } from './common';
 
 // 标签实体接口
-export interface Tag extends BaseEntity {
+export interface TagType extends BaseEntity {
   name: string;
   slug: string;
   description?: string;
@@ -10,8 +10,8 @@ export interface Tag extends BaseEntity {
   articleCount: number;
 }
 
-// 创建标签DTO
-export interface CreateTagDto {
+// 创建标签
+export interface CreateTagType {
   name: string;
   slug?: string;
   description?: string;
@@ -19,8 +19,8 @@ export interface CreateTagDto {
   isActive?: boolean;
 }
 
-// 更新标签DTO
-export interface UpdateTagDto {
+// 更新标签
+export interface UpdateTagType {
   name?: string;
   slug?: string;
   description?: string;
@@ -28,19 +28,19 @@ export interface UpdateTagDto {
   isActive?: boolean;
 }
 
-// 标签查询DTO
-export interface TagQueryDto extends PaginationParams {
+// 标签查询
+export interface TagQueryType extends PaginationParams {
   isActive?: boolean;
 }
 
-// 热门标签查询DTO
-export interface PopularTagsDto {
+// 热门标签查询
+export interface PopularTagsType {
   limit?: number;
   minArticleCount?: number;
 }
 
 // 标签统计接口
-export interface TagStats {
+export interface TagStatsType {
   total: number;
   visible: number;
   hidden: number;
@@ -48,4 +48,4 @@ export interface TagStats {
 }
 
 // 标签表单数据类型（用于页面组件）
-export type TagFormData = CreateTagDto & UpdateTagDto;
+export type TagFormDataType = CreateTagType & UpdateTagType;

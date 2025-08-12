@@ -1,4 +1,4 @@
-import type { StandardError } from '@/utils/errorHandler';
+import type { StandardError } from '@/utils';
 import type { RequestOptions } from '@umijs/max';
 
 // 请求配置接口

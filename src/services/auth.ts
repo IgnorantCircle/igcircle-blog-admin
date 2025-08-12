@@ -1,32 +1,32 @@
 import type {
   AuthResponse,
-  LoginDto,
-  RegisterDto,
-  SendVerificationCodeDto,
+  LoginType,
+  RegisterType,
+  SendVerificationCodeType,
 } from '@/types';
-import { http } from '@/utils/request';
+import { http } from '@/utils';
 
 // 认证相关API
 export const authAPI = {
   // 用户登录
-  login: (data: LoginDto): Promise<AuthResponse> => {
+  login: (data: LoginType): Promise<AuthResponse> => {
     return http.post('/auth/login', data);
   },
 
   // 管理员登录
-  adminLogin: (data: LoginDto): Promise<AuthResponse> => {
+  adminLogin: (data: LoginType): Promise<AuthResponse> => {
     return http.post('/auth/admin/login', data);
   },
 
   // 发送注册验证码
   sendVerificationCode: (
-    data: SendVerificationCodeDto,
+    data: SendVerificationCodeType,
   ): Promise<{ message: string }> => {
     return http.post('/auth/send-verification-code', data);
   },
 
   // 用户注册
-  register: (data: RegisterDto): Promise<AuthResponse> => {
+  register: (data: RegisterType): Promise<AuthResponse> => {
     return http.post('/auth/register', data);
   },
 
@@ -38,11 +38,6 @@ export const authAPI = {
   // 强制退出所有设备
   logoutAll: (): Promise<{ message: string }> => {
     return http.post('/auth/logout-all');
-  },
-
-  // 刷新token
-  refreshToken: (): Promise<AuthResponse> => {
-    return http.post('/auth/refresh');
   },
 
   // 获取当前用户信息

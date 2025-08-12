@@ -1,10 +1,10 @@
-import type { Category } from './category';
+import type { CategoryType } from './category';
 import type { BaseEntity, PaginationParams } from './common';
-import type { Tag } from './tag';
-import type { User } from './user';
+import type { TagType } from './tag';
+import type { UserType } from './user';
 
 // 文章实体接口
-export interface Article extends BaseEntity {
+export interface ArticleType extends BaseEntity {
   title: string;
   content: string;
   summary?: string;
@@ -26,71 +26,96 @@ export interface Article extends BaseEntity {
   metaKeywords?: string[];
   socialImage?: string;
   viewHistory?: { date: string; count: number }[];
-  tags?: Tag[];
-  category?: Category;
+  tags?: TagType[];
+  category?: CategoryType;
   categoryId?: string;
-  author: User;
+  author: UserType;
   authorId: string;
 }
 
-// 创建文章DTO
-export interface CreateArticleDto {
+// 创建文章Type
+export interface CreateArticleType {
   title: string;
   content: string;
   summary?: string;
   slug?: string;
+  status?: 'draft' | 'published' | 'archived';
   coverImage?: string;
   categoryId?: string;
+  categoryIds?: string[];
   tagIds?: string[];
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
   metaDescription?: string;
   metaKeywords?: string[];
   socialImage?: string;
   isFeatured?: boolean;
   isTop?: boolean;
+  isVisible?: boolean;
   weight?: number;
+  readingTime?: number;
   allowComment?: boolean;
+  allowComments?: boolean;
+  publishedAt?: string;
+  customFields?: Record<string, any>;
 }
 
-// 更新文章DTO
-export interface UpdateArticleDto {
+// 更新文章Type
+export interface UpdateArticleType {
   title?: string;
   content?: string;
   summary?: string;
   slug?: string;
+  status?: 'draft' | 'published' | 'archived';
   coverImage?: string;
   categoryId?: string;
+  categoryIds?: string[];
   tagIds?: string[];
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
   metaDescription?: string;
   metaKeywords?: string[];
   socialImage?: string;
   isFeatured?: boolean;
   isTop?: boolean;
+  isVisible?: boolean;
   weight?: number;
   readingTime?: number;
   allowComment?: boolean;
+  allowComments?: boolean;
+  publishedAt?: string;
+  customFields?: Record<string, any>;
 }
 
-// 文章查询DTO
-export interface ArticleQueryDto extends PaginationParams {
+// 文章查询Type
+export interface ArticleQueryType extends PaginationParams {
   status?: 'draft' | 'published' | 'archived';
   authorId?: string;
   categoryId?: string;
+  categoryIds?: string[];
+  tagIds?: string[];
   tagId?: string;
   isFeatured?: boolean;
   isTop?: boolean;
+  minReadingTime?: number;
+  maxReadingTime?: number;
+  year?: number;
+  month?: number;
   startDate?: string;
   endDate?: string;
   includeTags?: boolean;
   includeCategory?: boolean;
 }
 
-// 发布文章DTO
-export interface PublishArticleDto {
+// 发布文章Type
+export interface PublishArticleType {
   publishedAt?: string;
 }
 
 // 文章统计接口
-export interface ArticleStats {
+export interface ArticleStatsType {
   total: number;
   published: number;
   draft: number;
@@ -101,18 +126,19 @@ export interface ArticleStats {
   totalShares: number;
   featuredCount: number;
   topCount: number;
-  recentArticles: Article[];
-  popularArticles: Article[];
+  recentArticles: ArticleType[];
+  popularArticles: ArticleType[];
   categoryStats: { name: string; count: number; percentage: number }[];
   tagStats: { name: string; count: number; percentage: number }[];
   monthlyStats: { month: string; articles: number; views: number }[];
+  readingTimeStats: {
+    average: number;
+    distribution: { range: string; count: number }[];
+  };
 }
 
-// 文章项类型（用于列表显示）
-export type ArticleItem = Article;
-
 // 文章导入相关类型
-export interface ArticleImportConfigDto {
+export interface ArticleImportConfigType {
   /** 默认分类名称 */
   defaultCategory?: string;
   /** 默认标签列表 */
@@ -127,11 +153,11 @@ export interface ArticleImportConfigDto {
   skipInvalidFiles?: boolean;
 }
 
-export interface ImportProgressDto {
+export interface ImportProgressType {
   /** 任务ID */
   taskId: string;
   /** 导入状态 */
-  status: ImportTaskStatus;
+  status: ImportTaskStatusType;
   /** 总文件数 */
   totalFiles: number;
   /** 已处理文件数 */
@@ -153,10 +179,10 @@ export interface ImportProgressDto {
   /** 错误信息（失败时） */
   error?: string;
   /** 详细结果（完成时） */
-  results?: ArticleImportResultDto[];
+  results?: ArticleImportResultType[];
 }
 
-export interface ArticleImportResultDto {
+export interface ArticleImportResultType {
   /** 文件路径 */
   filePath: string;
   /** 是否成功 */
@@ -173,7 +199,7 @@ export interface ArticleImportResultDto {
   warnings?: string[];
 }
 
-export interface ArticleImportResponseDto {
+export interface ArticleImportResponseType {
   /** 总文件数 */
   totalFiles: number;
   /** 成功导入数 */
@@ -183,7 +209,7 @@ export interface ArticleImportResponseDto {
   /** 跳过数 */
   skippedCount: number;
   /** 详细结果 */
-  results: ArticleImportResultDto[];
+  results: ArticleImportResultType[];
   /** 导入开始时间 */
   startTime: number;
   /** 导入结束时间 */
@@ -192,23 +218,23 @@ export interface ArticleImportResponseDto {
   duration: number;
 }
 
-export interface ArticleImportTaskResponse {
+export interface ArticleImportTaskResponseType {
   /** 任务ID */
   taskId: string;
 }
 
-export interface StartImportResponseDto {
+export interface StartImportResponseType {
   /** 任务ID */
   taskId: string;
   /** 导入状态 */
-  status: ImportTaskStatus;
+  status: ImportTaskStatusType;
   /** 总文件数 */
   totalFiles: number;
   /** 消息 */
   message: string;
 }
 
-export interface ImportFileItem {
+export interface ImportFileItemType {
   /** 文件对象 */
   file: File;
   /** 唯一标识 */
@@ -224,7 +250,7 @@ export interface ImportFileItem {
 }
 
 // 导入任务状态
-export type ImportTaskStatus =
+export type ImportTaskStatusType =
   | 'pending'
   | 'processing'
   | 'completed'
@@ -239,7 +265,7 @@ export enum ImportTaskStatusEnum {
 }
 
 // 导入状态文本映射
-export const IMPORT_STATUS_TEXTS: Record<ImportTaskStatus, string> = {
+export const IMPORT_STATUS_TEXTS: Record<ImportTaskStatusType, string> = {
   pending: '等待中',
   processing: '处理中',
   completed: '已完成',
@@ -247,9 +273,56 @@ export const IMPORT_STATUS_TEXTS: Record<ImportTaskStatus, string> = {
 } as const;
 
 // 导入状态颜色映射
-export const IMPORT_STATUS_COLORS: Record<ImportTaskStatus, string> = {
+export const IMPORT_STATUS_COLORS: Record<ImportTaskStatusType, string> = {
   pending: 'orange',
   processing: 'blue',
   completed: 'green',
   failed: 'red',
 } as const;
+
+// 批量操作基础Type
+export interface BatchArticleOperationType {
+  ids: string[];
+}
+
+// 批量发布文章Type
+export interface BatchPublishArticleType extends BatchArticleOperationType {
+  publishedAt?: string;
+}
+
+// 批量删除文章Type
+export type BatchDeleteArticleType = BatchArticleOperationType;
+
+// 批量归档文章Type
+export type BatchArchiveArticleType = BatchArticleOperationType;
+
+// 批量更新文章Type
+export interface BatchUpdateArticleType extends BatchArticleOperationType {
+  categoryId?: string;
+  categoryIds?: string[];
+  tagIds?: string[];
+  status?: 'draft' | 'published' | 'archived';
+  isFeatured?: boolean;
+  isTop?: boolean;
+  isVisible?: boolean;
+}
+
+// 批量导出文章Type
+export interface BatchExportArticleType {
+  ids?: string[];
+  format?: 'json' | 'csv' | 'markdown';
+  status?: 'draft' | 'published' | 'archived';
+  categoryId?: string;
+  categoryIds?: string[];
+  tagIds?: string[];
+  includeContent?: boolean;
+  includeTags?: boolean;
+  includeCategory?: boolean;
+}
+
+// 批量导出响应Type
+export interface BatchExportResponseType {
+  data: any;
+  filename?: string;
+  total?: number;
+}

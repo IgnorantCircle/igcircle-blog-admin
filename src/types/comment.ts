@@ -1,9 +1,9 @@
-import type { Article } from './article';
+import type { ArticleType } from './article';
 import type { BaseEntity, PaginationParams } from './common';
-import type { User } from './user';
+import type { UserType } from './user';
 
 // 评论实体接口
-export interface Comment extends BaseEntity {
+export interface CommentType extends BaseEntity {
   id: string;
   content: string;
   likeCount: number;
@@ -15,9 +15,9 @@ export interface Comment extends BaseEntity {
   parent?: Comment;
   replies?: Comment[];
   articleId: string;
-  article?: Article;
+  article?: ArticleType;
   authorId: string;
-  author: User;
+  author: UserType;
   ipAddress?: string;
   userAgent?: string;
   createdAt: string;
@@ -25,27 +25,29 @@ export interface Comment extends BaseEntity {
   deletedAt?: string;
 }
 
-// 创建评论DTO
-export interface CreateCommentDto {
+// 创建评论
+export interface CreateCommentType {
+  id: string;
   content: string;
   articleId: string;
   parentId?: string;
 }
 
-// 更新评论DTO
-export interface UpdateCommentDto {
+// 更新评论
+export interface UpdateCommentType {
+  id: string;
   content: string;
 }
 
-// 管理员更新评论DTO
-export interface AdminUpdateCommentDto extends UpdateCommentDto {
+// 管理员更新评论
+export interface AdminUpdateCommentType extends UpdateCommentType {
   status?: 'active' | 'hidden' | 'deleted';
   isTop?: boolean;
   adminNote?: string;
 }
 
-// 评论查询DTO
-export interface CommentQueryDto extends PaginationParams {
+// 评论查询
+export interface CommentQueryType extends PaginationParams {
   articleId?: string;
   authorId?: string;
   status?: 'active' | 'hidden' | 'deleted';
@@ -54,7 +56,7 @@ export interface CommentQueryDto extends PaginationParams {
 }
 
 // 评论统计接口
-export interface CommentStats {
+export interface CommentStatsType {
   total: number;
   active: number;
   hidden: number;
@@ -63,6 +65,3 @@ export interface CommentStats {
   replies: number;
   recentComments: Comment[];
 }
-
-// 评论列表项类型（用于页面组件）
-export type CommentItem = Comment;

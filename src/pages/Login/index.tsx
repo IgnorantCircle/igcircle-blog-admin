@@ -1,5 +1,5 @@
 import { authAPI } from '@/services';
-import { LoginDto } from '@/types';
+import { LoginType } from '@/types';
 import rsaUtil from '@/utils/rsa';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { history } from '@umijs/max';
@@ -28,7 +28,7 @@ const Login: React.FC = () => {
     initRsaKey();
   }, []);
 
-  const handleSubmit = async (values: LoginDto) => {
+  const handleSubmit = async (values: LoginType) => {
     setLoading(true);
     try {
       // 检查RSA公钥是否已设置

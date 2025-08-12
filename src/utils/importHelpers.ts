@@ -1,4 +1,4 @@
-import type { ArticleImportConfigDto } from '@/types';
+import type { ArticleImportConfigType } from '@/types';
 
 /**
  * 构建文章导入的FormData
@@ -8,7 +8,7 @@ import type { ArticleImportConfigDto } from '@/types';
  */
 export const buildImportFormData = (
   files: File[],
-  config: ArticleImportConfigDto,
+  config: ArticleImportConfigType,
 ): FormData => {
   const formData = new FormData();
 

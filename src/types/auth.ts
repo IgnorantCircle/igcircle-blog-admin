@@ -1,13 +1,11 @@
-import type { User } from './user';
+import type { UserType } from './user';
 
-// 登录DTO
-export interface LoginDto {
+export interface LoginType {
   username: string;
   password: string;
 }
 
-// 注册DTO
-export interface RegisterDto {
+export interface RegisterType {
   username: string;
   email: string;
   password: string;
@@ -15,13 +13,12 @@ export interface RegisterDto {
   verificationCode: string;
 }
 
-// 发送验证码DTO
-export interface SendVerificationCodeDto {
+export interface SendVerificationCodeType {
   email: string;
 }
 
 // 认证响应接口
 export interface AuthResponse {
   accessToken: string;
-  user: Pick<User, 'id' | 'username' | 'email' | 'nickname' | 'role'>;
+  user: Pick<UserType, 'id' | 'username' | 'email' | 'nickname' | 'role'>;
 }

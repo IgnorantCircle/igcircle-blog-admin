@@ -1,21 +1,21 @@
-import type { Article, ArticleStats } from './article';
+import type { ArticleStatsType, ArticleType } from './article';
 import type { CategoryStats } from './category';
-import type { CommentStats } from './comment';
-import type { TagStats } from './tag';
-import type { UserStats } from './user';
+import type { CommentStatsType } from './comment';
+import type { TagStatsType } from './tag';
+import type { UserStatsType } from './user';
 
 // 仪表板统计接口
-export interface DashboardStats {
-  articles: ArticleStats;
+export interface DashboardStatsType {
+  articles: ArticleStatsType;
   categories: CategoryStats;
-  tags: TagStats;
-  users: UserStats;
-  comments: CommentStats;
-  recentArticles: Article[];
+  tags: TagStatsType;
+  users: UserStatsType;
+  comments: CommentStatsType;
+  recentArticles: ArticleType[];
 }
 
 // 仪表板统计数据类型（用于页面组件）
-export interface DashboardStatsData {
+export interface DashboardStatsDataType {
   totalArticles: number;
   publishedArticles: number;
   draftArticles: number;
@@ -30,7 +30,7 @@ export interface DashboardStatsData {
 }
 
 // 最近文章类型（用于页面组件）
-export interface RecentArticle {
+export interface RecentArticleType {
   id: number;
   title: string;
   status: string;

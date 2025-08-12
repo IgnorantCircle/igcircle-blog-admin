@@ -2,7 +2,7 @@ import { defineConfig } from '@umijs/max';
 import { config } from 'dotenv';
 
 // 加载环境变量
-config({ path: '.env.development' });
+config({ path: '.env.local' });
 
 export default defineConfig({
   antd: {},
@@ -17,6 +17,7 @@ export default defineConfig({
   },
   layout: {
     title: 'igCircle Blog',
+    siderWidth: 180,
   },
   routes: [
     {
@@ -42,6 +43,13 @@ export default defineConfig({
         {
           path: '/articles',
           component: './Articles',
+
+          redirect: '/articles/list',
+        },
+        {
+          path: '/articles/list',
+          component: './Articles',
+          name: '文章列表',
         },
         {
           path: '/articles/create',
@@ -57,6 +65,11 @@ export default defineConfig({
           path: '/articles/preview/:id',
           component: './Articles/Preview',
           hideInMenu: true,
+        },
+        {
+          path: '/articles/statistics',
+          component: './Articles/Statistics',
+          name: '文章统计',
         },
         {
           path: '/articles/import',

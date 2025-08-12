@@ -1,6 +1,6 @@
-import { useCallback } from 'react';
+import { BusinessErrorHandler, ErrorUtils, type StandardError } from '@/utils';
 import { message } from 'antd';
-import { BusinessErrorHandler, ErrorUtils, type StandardError } from '@/utils/errorHandler';
+import { useCallback } from 'react';
 
 /**
  * 错误处理配置
@@ -24,57 +24,62 @@ export const useErrorHandler = () => {
   /**
    * 处理错误的通用方法
    */
-  const handleError = useCallback((error: any, options?: ErrorHandlerOptions) => {
-    const {
-      showMessage = true,
-      customMessage,
-      onError,
-      silent = false,
-    } = options || {};
-
-    let standardError: StandardError;
-
-    // 检查是否已经是标准化错误
-    if (error?.standardError) {
-      standardError = error.standardError;
-    } else {
-      // 转换为标准化错误
-      standardError = {
-        type: 'BUSINESS' as any,
-        code: 'BUSINESS_ERROR',
-        message: error?.message || '操作失败',
-        originalError: error,
-      };
-    }
-
-    // 静默模式下不显示任何消息
-    if (silent) {
-      onError?.(standardError);
-      return standardError;
-    }
-
-    // 根据错误类型进行不同处理
-    if (ErrorUtils.isNetworkError(standardError)) {
-      // 网络错误已在HTTP客户端层处理，这里只执行回调
-      onError?.(standardError);
-    } else if (ErrorUtils.isHttpError(standardError)) {
-      // HTTP错误已在HTTP客户端层处理，这里只执行回调
-      onError?.(standardError);
-    } else if (ErrorUtils.isValidationError(standardError)) {
-      // 验证错误特殊处理
-      BusinessErrorHandler.handleValidationError(standardError, { showMessage });
-      onError?.(standardError);
-    } else {
-      // 业务逻辑错误
-      BusinessErrorHandler.handleBusinessError(standardError, {
-        showMessage,
+  const handleError = useCallback(
+    (error: any, options?: ErrorHandlerOptions) => {
+      const {
+        showMessage = true,
         customMessage,
-      });
-      onError?.(standardError);
-    }
+        onError,
+        silent = false,
+      } = options || {};
 
-    return standardError;
-  }, []);
+      let standardError: StandardError;
+
+      // 检查是否已经是标准化错误
+      if (error?.standardError) {
+        standardError = error.standardError;
+      } else {
+        // 转换为标准化错误
+        standardError = {
+          type: 'BUSINESS' as any,
+          code: 'BUSINESS_ERROR',
+          message: error?.message || '操作失败',
+          originalError: error,
+        };
+      }
+
+      // 静默模式下不显示任何消息
+      if (silent) {
+        onError?.(standardError);
+        return standardError;
+      }
+
+      // 根据错误类型进行不同处理
+      if (ErrorUtils.isNetworkError(standardError)) {
+        // 网络错误已在HTTP客户端层处理，这里只执行回调
+        onError?.(standardError);
+      } else if (ErrorUtils.isHttpError(standardError)) {
+        // HTTP错误已在HTTP客户端层处理，这里只执行回调
+        onError?.(standardError);
+      } else if (ErrorUtils.isValidationError(standardError)) {
+        // 验证错误特殊处理
+        BusinessErrorHandler.handleValidationError(standardError, {
+          showMessage,
+        });
+        onError?.(standardError);
+      } else {
+        // 业务逻辑错误
+        BusinessErrorHandler.handleBusinessError(standardError, {
+          showMessage,
+          customMessage,
+        });
+        onError?.(standardError);
+      }
+
+      return standardError;
+    },
+    [],
+  );
 
   /**
    * 处理异步操作错误
@@ -82,7 +87,7 @@ export const useErrorHandler = () => {
   const handleAsyncError = useCallback(
     async <T>(
       asyncFn: () => Promise<T>,
-      options?: ErrorHandlerOptions
+      options?: ErrorHandlerOptions,
     ): Promise<T | null> => {
       try {
         return await asyncFn();
@@ -91,7 +96,7 @@ export const useErrorHandler = () => {
         return null;
       }
     },
-    [handleError]
+    [handleError],
   );
 
   /**
@@ -103,7 +108,7 @@ export const useErrorHandler = () => {
         handleError(error, options);
       };
     },
-    [handleError]
+    [handleError],
   );
 
   /**

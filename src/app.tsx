@@ -1,20 +1,19 @@
+import ForbiddenComponent from '@/pages/403';
 import { authAPI } from '@/services';
-import type { User } from '@/types';
-import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
+import type { UserType } from '@/types';
+import { LogoutOutlined, SettingOutlined } from '@ant-design/icons';
 import type {
   AxiosRequestConfig,
   AxiosResponse,
   RequestConfig,
 } from '@umijs/max';
 import { history } from '@umijs/max';
-import { Avatar, Dropdown, message, Space } from 'antd';
-import React from 'react';
-const baseUrl = process.env.REACT_APP_API_BASE_URL;
-// 运行时配置
+import { message, Tooltip } from 'antd';
 
-// 全局初始化数据配置，用于 Layout 用户信息和权限初始化
-// 更多信息见文档：https://umijs.org/docs/api/runtime-config#getinitialstate
-export async function getInitialState(): Promise<{ userInfo?: User } | null> {
+const baseUrl = process.env.REACT_APP_API_BASE_URL;
+export async function getInitialState(): Promise<{
+  userInfo?: UserType;
+} | null> {
   // 检查是否存在token
   const token = localStorage.getItem('token');
   const userInfo = localStorage.getItem('userInfo') ?? '';
@@ -35,7 +34,7 @@ export async function getInitialState(): Promise<{ userInfo?: User } | null> {
   return { userInfo: JSON.parse(userInfo) };
 }
 
-export const layout = () => {
+export const layout = ({ initialState = {} }) => {
   // 退出登录处理函数
   const handleLogout = async () => {
     try {
@@ -51,51 +50,29 @@ export const layout = () => {
       history.push('/login');
     }
   };
-
-  // 获取用户信息
-  const userInfo = localStorage.getItem('userInfo');
-  const user = userInfo ? JSON.parse(userInfo) : null;
-
-  // 用户菜单项
-  const userMenuItems = [
-    {
-      key: 'logout',
-      icon: React.createElement(LogoutOutlined),
-      label: '退出登录',
-      onClick: handleLogout,
-    },
-  ];
-
   return {
     logo: 'https://img.alicdn.com/tfs/TB1YHEpwUT1gK0jSZFhXXaAtVXa-28-27.svg',
     menu: {
       locale: false,
     },
-    rightContentRender: () => {
-      if (!user) return null;
-
-      return React.createElement(
-        Space,
-        { size: 'middle' },
-        React.createElement(
-          Dropdown,
-          {
-            menu: { items: userMenuItems },
-            placement: 'topRight',
-            arrow: true,
-          },
-          React.createElement(
-            Space,
-            { style: { cursor: 'pointer' } },
-            React.createElement(Avatar, {
-              size: 'small',
-              icon: React.createElement(UserOutlined),
-            }),
-            React.createElement('span', null, user.username || '管理员'),
-          ),
-        ),
-      );
+    locale: false,
+    enableDarkTheme: true,
+    siderWidth: 180,
+    avatarProps: {
+      src: 'https://gw.alipayobjects.com/zos/antfincdn/efFD%24IOql2/weixintupian_20170331104822.jpg',
+      title: initialState.userInfo?.username,
     },
+    actionsRender: () => {
+      return [
+        <Tooltip title="退出登录" key="logout">
+          <LogoutOutlined onClick={handleLogout} />
+        </Tooltip>,
+        <Tooltip title="设置" key="setting">
+          <SettingOutlined />
+        </Tooltip>,
+      ];
+    },
+    unAccessible: () => <ForbiddenComponent />,
   };
 };
 
