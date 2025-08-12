@@ -1,41 +1,25 @@
 import { categoryAPI } from '@/services/category';
-import { formatTimestamp } from '@/utils/format';
+import type { CategoryFormDataType, CategoryItemType } from '@/types';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import {
   ActionType,
-  ModalForm,
   PageContainer,
   ProColumns,
-  ProFormDigit,
-  ProFormSelect,
-  ProFormSwitch,
-  ProFormText,
-  ProFormTextArea,
   ProTable,
 } from '@ant-design/pro-components';
 import { Button, Card, Col, Popconfirm, Row, Space, Tag, Tree } from 'antd';
 import type { DataNode } from 'antd/es/tree';
-import type { CategoryItem, CategoryFormData } from '@/types';
 import React, { useRef, useState } from 'react';
+import EditModal from './EditModal';
 
 const CategoryList: React.FC = () => {
   const actionRef = useRef<ActionType>();
-  const [createModalVisible, setCreateModalVisible] = useState(false);
-  const [editModalVisible, setEditModalVisible] = useState(false);
-  const [currentCategory, setCurrentCategory] = useState<CategoryItem | null>(
-    null,
-  );
-  const [categoryTree, setCategoryTree] = useState<CategoryItem[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [currentCategory, setCurrentCategory] =
+    useState<CategoryItemType | null>(null);
+  const [categoryTree, setCategoryTree] = useState<CategoryItemType[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'tree'>('table');
-
-  // 生成slug
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  };
-
   // 加载分类树
   const loadCategoryTree = async () => {
     try {
@@ -53,31 +37,16 @@ const CategoryList: React.FC = () => {
     } catch (error) {}
   };
 
-  // 创建分类
-  const handleCreate = async (values: CategoryFormData) => {
+  // 处理Modal提交
+  const handleModalFinish = async (values: CategoryFormDataType) => {
     try {
-      await categoryAPI.createCategory({
-        ...values,
-        slug: values.slug || generateSlug(values.name),
-      });
-      setCreateModalVisible(false);
-      actionRef.current?.reload();
-      loadCategoryTree();
-      return true;
-    } catch (error) {
-      return false;
-    }
-  };
-
-  // 更新分类
-  const handleUpdate = async (values: CategoryFormData) => {
-    if (!currentCategory) return false;
-    try {
-      await categoryAPI.updateCategory(currentCategory.id, {
-        ...values,
-        slug: values.slug || generateSlug(values.name),
-      });
-      setEditModalVisible(false);
+      if (modalMode === 'create') {
+        await categoryAPI.createCategory(values);
+      } else {
+        if (!currentCategory) return false;
+        await categoryAPI.updateCategory(currentCategory.id, values);
+      }
+      setModalVisible(false);
       setCurrentCategory(null);
       actionRef.current?.reload();
       loadCategoryTree();
@@ -88,7 +57,7 @@ const CategoryList: React.FC = () => {
   };
 
   // 转换为树形数据
-  const convertToTreeData = (categories: CategoryItem[]): DataNode[] => {
+  const convertToTreeData = (categories: CategoryItemType[]): DataNode[] => {
     return categories.map((category) => ({
       key: category.id,
       title: (
@@ -117,7 +86,8 @@ const CategoryList: React.FC = () => {
               icon={<EditOutlined />}
               onClick={() => {
                 setCurrentCategory(category);
-                setEditModalVisible(true);
+                setModalMode('edit');
+                setModalVisible(true);
               }}
             >
               编辑
@@ -141,29 +111,37 @@ const CategoryList: React.FC = () => {
     }));
   };
 
-  const columns: ProColumns<CategoryItem>[] = [
+  const columns: ProColumns<CategoryItemType>[] = [
     {
       title: '分类名称',
       dataIndex: 'name',
-      width: 200,
+      minWidth: 200,
+      search: {
+        transform: (value) => ({
+          keyword: value,
+        }),
+      },
     },
     {
       title: 'URL别名',
       dataIndex: 'slug',
-      width: 150,
+      minWidth: 150,
       copyable: true,
+      search: false,
     },
     {
       title: '描述',
       dataIndex: 'description',
-      width: 300,
+      minWidth: 200,
       ellipsis: true,
+      search: false,
       render: (text) => text || '-',
     },
     {
       title: '父分类',
       dataIndex: ['parent', 'name'],
-      width: 150,
+      minWidth: 90,
+      search: false,
       render: (text) => text || '顶级分类',
     },
     {
@@ -171,6 +149,7 @@ const CategoryList: React.FC = () => {
       dataIndex: 'sortOrder',
       width: 80,
       sorter: true,
+      search: false,
     },
     {
       title: '状态',
@@ -190,15 +169,17 @@ const CategoryList: React.FC = () => {
     {
       title: '文章数量',
       dataIndex: 'articleCount',
+      tooltip: '已发布的可见文章',
       width: 100,
+      search: false,
       render: (count) => <Tag color="blue">{count}</Tag>,
     },
     {
       title: '创建时间',
       dataIndex: 'createdAt',
       width: 150,
+      search: false,
       valueType: 'dateTime',
-      render: (_, record) => formatTimestamp(record.updatedAt),
     },
     {
       title: '操作',
@@ -212,7 +193,8 @@ const CategoryList: React.FC = () => {
           icon={<EditOutlined />}
           onClick={() => {
             setCurrentCategory(record);
-            setEditModalVisible(true);
+            setModalMode('edit');
+            setModalVisible(true);
           }}
         >
           编辑
@@ -235,12 +217,12 @@ const CategoryList: React.FC = () => {
   return (
     <PageContainer>
       <Row gutter={16}>
-        <Col span={viewMode === 'tree' ? 12 : 24}>
-          <ProTable<CategoryItem>
+        <Col span={viewMode === 'tree' ? 16 : 24}>
+          <ProTable<CategoryItemType>
             headerTitle="分类管理"
             actionRef={actionRef}
             rowKey="id"
-            scroll={{ x: 'auto' }}
+            scroll={{ x: 1100 }}
             search={{
               labelWidth: 120,
             }}
@@ -260,18 +242,23 @@ const CategoryList: React.FC = () => {
                 key="create"
                 type="primary"
                 icon={<PlusOutlined />}
-                onClick={() => setCreateModalVisible(true)}
+                onClick={() => {
+                  setCurrentCategory(null);
+                  setModalMode('create');
+                  setModalVisible(true);
+                }}
               >
                 新建分类
               </Button>,
             ]}
             request={async (params) => {
-              console.log('pafes', params);
               try {
+                const { current, pageSize, ...formData } = params;
+
                 const response = await categoryAPI.getCategories({
-                  page: params.current,
-                  limit: params.pageSize,
-                  ...(params.name && { search: params.name }),
+                  page: current,
+                  limit: pageSize,
+                  ...formData,
                 });
                 return {
                   data: response.items || [],
@@ -295,7 +282,7 @@ const CategoryList: React.FC = () => {
         </Col>
 
         {viewMode === 'tree' && (
-          <Col span={12}>
+          <Col span={8}>
             <Card title="分类树形结构">
               <Tree
                 showLine
@@ -307,145 +294,13 @@ const CategoryList: React.FC = () => {
         )}
       </Row>
 
-      {/* 创建分类弹窗 */}
-      <ModalForm
-        title="创建分类"
-        width={600}
-        open={createModalVisible}
-        onOpenChange={setCreateModalVisible}
-        onFinish={handleCreate}
-        modalProps={{
-          destroyOnClose: true,
-        }}
-      >
-        <ProFormText
-          name="name"
-          label="分类名称"
-          placeholder="请输入分类名称"
-          rules={[
-            { required: true, message: '请输入分类名称' },
-            { max: 50, message: '分类名称不能超过50个字符' },
-          ]}
-        />
-
-        <ProFormText
-          name="slug"
-          label="URL别名"
-          placeholder="自动生成或手动输入"
-          tooltip="用于生成分类的URL，建议使用英文和数字"
-        />
-
-        <ProFormTextArea
-          name="description"
-          label="分类描述"
-          placeholder="请输入分类描述（可选）"
-          fieldProps={{
-            rows: 3,
-            maxLength: 200,
-            showCount: true,
-          }}
-        />
-
-        <ProFormSelect
-          name="parentId"
-          label="父分类"
-          placeholder="选择父分类（可选）"
-          request={async () => {
-            try {
-              const response = await categoryAPI.getCategories({ limit: 100 });
-              return (response.items || []).map((cat: CategoryItem) => ({
-                label: cat.name,
-                value: cat.id,
-              }));
-            } catch (error) {
-              return [];
-            }
-          }}
-        />
-
-        <ProFormDigit
-          name="sortOrder"
-          label="排序"
-          placeholder="请输入排序值"
-          min={0}
-          max={999}
-          initialValue={0}
-          tooltip="数值越小排序越靠前"
-        />
-
-        <ProFormSwitch name="isActive" label="是否显示" initialValue={true} />
-      </ModalForm>
-
-      {/* 编辑分类弹窗 */}
-      <ModalForm
-        title="编辑分类"
-        width={600}
-        open={editModalVisible}
-        onOpenChange={setEditModalVisible}
-        onFinish={handleUpdate}
-        initialValues={currentCategory || {}}
-        modalProps={{
-          destroyOnClose: true,
-        }}
-      >
-        <ProFormText
-          name="name"
-          label="分类名称"
-          placeholder="请输入分类名称"
-          rules={[
-            { required: true, message: '请输入分类名称' },
-            { max: 50, message: '分类名称不能超过50个字符' },
-          ]}
-        />
-
-        <ProFormText
-          name="slug"
-          label="URL别名"
-          placeholder="自动生成或手动输入"
-          tooltip="用于生成分类的URL，建议使用英文和数字"
-        />
-
-        <ProFormTextArea
-          name="description"
-          label="分类描述"
-          placeholder="请输入分类描述（可选）"
-          fieldProps={{
-            rows: 3,
-            maxLength: 200,
-            showCount: true,
-          }}
-        />
-
-        <ProFormSelect
-          name="parentId"
-          label="父分类"
-          placeholder="选择父分类（可选）"
-          request={async () => {
-            try {
-              const response = await categoryAPI.getCategories({ limit: 100 });
-              return (response.items || [])
-                .filter((cat: CategoryItem) => cat.id !== currentCategory?.id)
-                .map((cat: CategoryItem) => ({
-                  label: cat.name,
-                  value: cat.id,
-                }));
-            } catch (error) {
-              return [];
-            }
-          }}
-        />
-
-        <ProFormDigit
-          name="sortOrder"
-          label="排序"
-          placeholder="请输入排序值"
-          min={0}
-          max={999}
-          tooltip="数值越小排序越靠前"
-        />
-
-        <ProFormSwitch name="isActive" label="是否显示" />
-      </ModalForm>
+      <EditModal
+        open={modalVisible}
+        onOpenChange={setModalVisible}
+        onFinish={handleModalFinish}
+        currentCategory={currentCategory}
+        mode={modalMode}
+      />
     </PageContainer>
   );
 };

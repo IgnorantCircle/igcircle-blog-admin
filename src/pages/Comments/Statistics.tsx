@@ -1,6 +1,6 @@
 import { commentAPI } from '@/services';
-import type { Comment, CommentStats } from '@/types';
-import { formatTimestamp } from '@/utils/format';
+import type { CommentStatsType, CommentType } from '@/types';
+import { formatTimestamp } from '@/utils';
 import {
   CommentOutlined,
   DeleteOutlined,
@@ -35,7 +35,7 @@ import React, { useEffect, useState } from 'react';
 
 const CommentStatistics: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<CommentStats | null>(null);
+  const [stats, setStats] = useState<CommentStatsType | null>(null);
 
   // 加载统计数据
   const loadStats = async () => {
@@ -249,7 +249,7 @@ const CommentStatistics: React.FC = () => {
             {stats.recentComments && stats.recentComments.length > 0 ? (
               <List
                 dataSource={stats.recentComments}
-                renderItem={(item: Comment) => (
+                renderItem={(item: CommentType) => (
                   <List.Item
                     actions={[
                       <Tag
@@ -341,7 +341,7 @@ const CommentStatistics: React.FC = () => {
           <ProCard title="评论活动时间线">
             {stats.recentComments && stats.recentComments.length > 0 ? (
               <Timeline>
-                {stats.recentComments.slice(0, 10).map((item: Comment) => (
+                {stats.recentComments.slice(0, 10).map((item: any) => (
                   <Timeline.Item
                     key={item.id}
                     color={

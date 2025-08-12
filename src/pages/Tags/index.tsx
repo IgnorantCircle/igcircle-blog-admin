@@ -1,82 +1,46 @@
+import { useApi } from '@/hooks';
 import { tagAPI } from '@/services/tag';
-import type { CreateTagDto, Tag as TagItem, UpdateTagDto } from '@/types';
-import { formatTimestamp } from '@/utils/format';
+import type { TagFormDataType, TagType } from '@/types';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import {
   ActionType,
-  ModalForm,
   PageContainer,
   ProColumns,
-  ProFormSwitch,
-  ProFormText,
-  ProFormTextArea,
   ProTable,
 } from '@ant-design/pro-components';
-import { Button, ColorPicker, Form, Popconfirm, Tag } from 'antd';
-import type { Color } from 'antd/es/color-picker';
+import { Button, Form, Popconfirm, Tag } from 'antd';
 import React, { useRef, useState } from 'react';
-import { useApi, useErrorHandler } from '@/hooks';
-
-// 使用类型别名简化类型名称
-type TagFormData = CreateTagDto & UpdateTagDto;
+import EditModal from './EditModal';
 
 const TagList: React.FC = () => {
   const actionRef = useRef<ActionType>();
-  const [createModalVisible, setCreateModalVisible] = useState(false);
-  const [editModalVisible, setEditModalVisible] = useState(false);
-  const [currentTag, setCurrentTag] = useState<TagItem | null>(null);
-  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
-  const [createForm] = Form.useForm();
-  const [editForm] = Form.useForm();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [currentTag, setCurrentTag] = useState<TagType | null>(null);
+  const [modalForm] = Form.useForm();
 
-  
   // 获取标签列表API
   const getTagsApi = useApi(tagAPI.getTags, {
-    silent: true, // ProTable会自己处理加载状态，不需要显示错误
+    silent: true,
   });
-  
+
   // 删除标签API
   const deleteTagApi = useApi(tagAPI.deleteTag, {
     showSuccessMessage: true,
     successMessage: '删除标签成功',
   });
-  
+
   // 创建标签API
   const createTagApi = useApi(tagAPI.createTag, {
     showSuccessMessage: true,
     successMessage: '创建标签成功',
   });
-  
+
   // 更新标签API
   const updateTagApi = useApi(tagAPI.updateTag, {
     showSuccessMessage: true,
     successMessage: '更新标签成功',
   });
-
-  // 预设颜色
-  const presetColors = [
-    '#f50',
-    '#2db7f5',
-    '#87d068',
-    '#108ee9',
-    '#f56a00',
-    '#722ed1',
-    '#eb2f96',
-    '#52c41a',
-    '#13c2c2',
-    '#1890ff',
-    '#faad14',
-    '#a0d911',
-  ];
-
-  // 生成slug
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  };
-
   // 删除标签 - 页面层专注业务逻辑，无需手动错误处理
   const handleDelete = async (id: string) => {
     const result = await deleteTagApi.request(id);
@@ -85,67 +49,59 @@ const TagList: React.FC = () => {
     }
   };
 
-  // 创建标签 - 页面层专注业务逻辑，无需手动错误处理
-  const handleCreate = async (values: TagFormData) => {
-    const result = await createTagApi.request({
-      ...values,
-      slug: values.slug || generateSlug(values.name),
-    });
-    
-    if (result) {
-      setCreateModalVisible(false);
-      createForm.resetFields();
-      actionRef.current?.reload();
-      return true;
-    }
-    return false;
-  };
+  // 处理Modal提交 - 页面层专注业务逻辑，无需手动错误处理
+  const handleModalFinish = async (values: TagFormDataType) => {
+    let result;
 
-  // 更新标签 - 页面层专注业务逻辑，无需手动错误处理
-  const handleUpdate = async (values: TagFormData) => {
-    if (!currentTag) return false;
-    
-    const result = await updateTagApi.request(currentTag.id.toString(), {
-      ...values,
-      slug: values.slug || generateSlug(values.name),
-    });
-    
+    if (modalMode === 'create') {
+      result = await createTagApi.request(values);
+    } else {
+      if (!currentTag) return false;
+      result = await updateTagApi.request(currentTag.id.toString(), values);
+    }
+
     if (result) {
-      setEditModalVisible(false);
+      setModalVisible(false);
       setCurrentTag(null);
-      editForm.resetFields();
+      modalForm.resetFields();
       actionRef.current?.reload();
       return true;
     }
     return false;
   };
 
-  const columns: ProColumns<TagItem>[] = [
+  const columns: ProColumns<TagType>[] = [
     {
       title: '标签名称',
       dataIndex: 'name',
-      width: 200,
-      render: (text, record) => (
-        <Tag color={record.color || 'blue'}>{text}</Tag>
-      ),
+      width: 120,
+      search: {
+        transform: (value) => ({
+          keyword: value,
+        }),
+      },
+      render: (text) => <Tag color="blue">{text}</Tag>,
     },
     {
-      title: 'Slug',
+      title: 'URL别名',
       dataIndex: 'slug',
       width: 150,
       copyable: true,
+      search: false,
     },
     {
       title: '描述',
       dataIndex: 'description',
-      width: 300,
+      minWidth: 120,
       ellipsis: true,
+      search: false,
       render: (text) => text || '-',
     },
     {
       title: '颜色',
       dataIndex: 'color',
-      width: 100,
+      search: false,
+      width: 120,
       render: (color) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div
@@ -164,7 +120,7 @@ const TagList: React.FC = () => {
     {
       title: '状态',
       dataIndex: 'isActive',
-      width: 100,
+      width: 80,
       valueType: 'select',
       valueEnum: {
         true: { text: '显示', status: 'Success' },
@@ -179,20 +135,24 @@ const TagList: React.FC = () => {
     {
       title: '文章数量',
       dataIndex: 'articleCount',
+      tooltip: '已发布的可见文章',
+      search: false,
       width: 100,
       render: (count) => <Tag color="blue">{count}</Tag>,
     },
     {
       title: '创建时间',
       dataIndex: 'createdAt',
+      search: false,
       width: 150,
       valueType: 'dateTime',
-      render: (_, record) => formatTimestamp(record.updatedAt),
     },
     {
       title: '操作',
       valueType: 'option',
-      width: 150,
+      search: false,
+      fixed: 'right',
+      width: 200,
       render: (_, record) => [
         <Button
           key="edit"
@@ -201,8 +161,9 @@ const TagList: React.FC = () => {
           icon={<EditOutlined />}
           onClick={() => {
             setCurrentTag(record);
-            editForm.setFieldsValue(record);
-            setEditModalVisible(true);
+            modalForm.setFieldsValue(record);
+            setModalMode('edit');
+            setModalVisible(true);
           }}
         >
           编辑
@@ -224,31 +185,37 @@ const TagList: React.FC = () => {
 
   return (
     <PageContainer>
-      <ProTable<TagItem>
+      <ProTable<TagType>
         headerTitle="标签管理"
         actionRef={actionRef}
         rowKey="id"
         search={{
           labelWidth: 120,
         }}
+        scroll={{ x: 1100 }}
         toolBarRender={() => [
           <Button
             key="create"
             type="primary"
             icon={<PlusOutlined />}
-            onClick={() => setCreateModalVisible(true)}
+            onClick={() => {
+              setCurrentTag(null);
+              modalForm.resetFields();
+              setModalMode('create');
+              setModalVisible(true);
+            }}
           >
             新建标签
           </Button>,
         ]}
         request={async (params) => {
-          // 使用新的错误处理架构 - 页面层专注业务逻辑
+          const { current, pageSize, ...formData } = params;
           const response = await getTagsApi.request({
-            page: params.current,
-            limit: params.pageSize,
-            search: params.name,
+            page: current,
+            limit: pageSize,
+            ...formData,
           });
-          
+
           if (response) {
             return {
               data: response.items || [],
@@ -256,7 +223,7 @@ const TagList: React.FC = () => {
               total: response.total || 0,
             };
           }
-          
+
           return {
             data: [],
             success: false,
@@ -264,145 +231,20 @@ const TagList: React.FC = () => {
           };
         }}
         columns={columns}
-        rowSelection={{
-          selectedRowKeys,
-          onChange: (keys) => setSelectedRowKeys(keys as string[]),
-        }}
         pagination={{
           defaultPageSize: 10,
           showSizeChanger: true,
         }}
       />
 
-      {/* 创建标签弹窗 */}
-      <ModalForm
-        title="创建标签"
-        width={600}
-        form={createForm}
-        open={createModalVisible}
-        onOpenChange={setCreateModalVisible}
-        onFinish={handleCreate}
-        modalProps={{
-          destroyOnClose: true,
-        }}
-      >
-        <ProFormText
-          name="name"
-          label="标签名称"
-          placeholder="请输入标签名称"
-          rules={[
-            { required: true, message: '请输入标签名称' },
-            { max: 30, message: '标签名称不能超过30个字符' },
-          ]}
-          fieldProps={{
-            onChange: (e) => {
-              const name = e.target.value;
-              if (name && !createForm.getFieldValue('slug')) {
-                createForm.setFieldValue('slug', generateSlug(name));
-              }
-            },
-          }}
-        />
-
-        <ProFormText
-          name="slug"
-          label="URL别名"
-          placeholder="自动生成或手动输入"
-          tooltip="用于生成标签的URL，建议使用英文和数字"
-        />
-
-        <ProFormTextArea
-          name="description"
-          label="标签描述"
-          placeholder="请输入标签描述（可选）"
-          fieldProps={{
-            rows: 3,
-            maxLength: 200,
-            showCount: true,
-          }}
-        />
-
-        <Form.Item name="color" label="标签颜色" tooltip="选择标签的显示颜色">
-          <ColorPicker
-            presets={[
-              {
-                label: '推荐',
-                colors: presetColors,
-              },
-            ]}
-            onChange={(color: Color) => {
-              createForm.setFieldValue('color', color.toHexString());
-            }}
-          />
-        </Form.Item>
-
-        <ProFormSwitch name="isVisible" label="是否显示" initialValue={true} />
-      </ModalForm>
-
-      {/* 编辑标签弹窗 */}
-      <ModalForm
-        title="编辑标签"
-        width={600}
-        form={editForm}
-        open={editModalVisible}
-        onOpenChange={setEditModalVisible}
-        onFinish={handleUpdate}
-        modalProps={{
-          destroyOnClose: true,
-        }}
-      >
-        <ProFormText
-          name="name"
-          label="标签名称"
-          placeholder="请输入标签名称"
-          rules={[
-            { required: true, message: '请输入标签名称' },
-            { max: 30, message: '标签名称不能超过30个字符' },
-          ]}
-          fieldProps={{
-            onChange: (e) => {
-              const name = e.target.value;
-              if (name && !editForm.getFieldValue('slug')) {
-                editForm.setFieldValue('slug', generateSlug(name));
-              }
-            },
-          }}
-        />
-
-        <ProFormText
-          name="slug"
-          label="URL别名"
-          placeholder="自动生成或手动输入"
-          tooltip="用于生成标签的URL，建议使用英文和数字"
-        />
-
-        <ProFormTextArea
-          name="description"
-          label="标签描述"
-          placeholder="请输入标签描述（可选）"
-          fieldProps={{
-            rows: 3,
-            maxLength: 200,
-            showCount: true,
-          }}
-        />
-
-        <Form.Item name="color" label="标签颜色" tooltip="选择标签的显示颜色">
-          <ColorPicker
-            presets={[
-              {
-                label: '推荐',
-                colors: presetColors,
-              },
-            ]}
-            onChange={(color: Color) => {
-              editForm.setFieldValue('color', color.toHexString());
-            }}
-          />
-        </Form.Item>
-
-        <ProFormSwitch name="isVisible" label="是否显示" />
-      </ModalForm>
+      <EditModal
+        open={modalVisible}
+        onOpenChange={setModalVisible}
+        onFinish={handleModalFinish}
+        currentTag={currentTag}
+        mode={modalMode}
+        form={modalForm}
+      />
     </PageContainer>
   );
 };

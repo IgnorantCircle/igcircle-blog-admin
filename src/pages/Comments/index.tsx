@@ -1,6 +1,6 @@
 import { commentAPI } from '@/services';
-import type { AdminUpdateCommentDto, Comment } from '@/types';
-import { formatTimestamp } from '@/utils/format';
+import type { AdminUpdateCommentType, CommentType } from '@/types';
+import { formatTimestamp } from '@/utils';
 import {
   BarChartOutlined,
   DeleteOutlined,
@@ -39,15 +39,12 @@ import {
 import React, { useRef, useState } from 'react';
 
 const { Text, Paragraph } = Typography;
-
-type CommentItem = Comment;
-
 const CommentList: React.FC = () => {
   const actionRef = useRef<ActionType>();
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [detailDrawerVisible, setDetailDrawerVisible] = useState(false);
-  const [currentComment, setCurrentComment] = useState<CommentItem | null>(
+  const [currentComment, setCurrentComment] = useState<CommentType | null>(
     null,
   );
 
@@ -93,7 +90,7 @@ const CommentList: React.FC = () => {
   };
 
   // 更新评论
-  const handleUpdate = async (values: AdminUpdateCommentDto) => {
+  const handleUpdate = async (values: AdminUpdateCommentType) => {
     if (!currentComment) return false;
     try {
       await commentAPI.updateComment(currentComment.id, values);
@@ -129,12 +126,12 @@ const CommentList: React.FC = () => {
     }
   };
   // 查看详情
-  const handleViewDetail = (record: CommentItem) => {
+  const handleViewDetail = (record: CommentType) => {
     setCurrentComment(record);
     setDetailDrawerVisible(true);
   };
 
-  const columns: ProColumns<CommentItem>[] = [
+  const columns: ProColumns<CommentType>[] = [
     {
       title: '评论内容',
       dataIndex: 'content',
@@ -325,7 +322,7 @@ const CommentList: React.FC = () => {
         </Button>,
       ]}
     >
-      <ProTable<CommentItem>
+      <ProTable<CommentType>
         headerTitle="评论管理"
         actionRef={actionRef}
         rowKey="id"
