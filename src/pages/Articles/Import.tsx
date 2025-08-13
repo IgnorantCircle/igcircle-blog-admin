@@ -1,15 +1,12 @@
 import { articleAPI, categoryAPI, tagAPI } from '@/services';
 import type {
-  ArticleImportConfigDto,
-  ArticleImportResponseDto,
-  ImportProgressDto,
-  StartImportResponseDto,
+  ArticleImportConfigType,
+  ArticleImportResponseType,
+  ImportProgressType,
+  StartImportResponseType,
 } from '@/types';
 import { IMPORT_STATUS_COLORS, IMPORT_STATUS_TEXTS } from '@/types';
-import {
-  buildImportFormData,
-  calculateMaxPollingAttempts,
-} from '@/utils/importHelpers';
+import { buildImportFormData, calculateMaxPollingAttempts } from '@/utils';
 import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
@@ -31,6 +28,7 @@ import {
   message,
   Modal,
   Progress,
+  Radio,
   Space,
   Table,
   Tag,
@@ -45,11 +43,12 @@ const { Text, Title } = Typography;
 const ArticleImport: React.FC = () => {
   const [fileList, setFileList] = useState<File[]>([]);
   const [importing, setImporting] = useState(false);
-  const [progress, setProgress] = useState<ImportProgressDto | null>(null);
-  const [result, setResult] = useState<ArticleImportResponseDto | null>(null);
+  const [progress, setProgress] = useState<ImportProgressType | null>(null);
+  const [result, setResult] = useState<ArticleImportResponseType | null>(null);
   const [resultModalVisible, setResultModalVisible] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [tags, setTags] = useState<any[]>([]);
+  const [uploadMode, setUploadMode] = useState<'file' | 'folder'>('file'); // 上传模式
   const formRef = useRef<any>(null);
   const progressTimer = useRef<NodeJS.Timeout>();
   const pollingAttempts = useRef<number>(0);
@@ -90,7 +89,7 @@ const ArticleImport: React.FC = () => {
     name: 'files',
     multiple: true,
     accept: '.md',
-    directory: true,
+    ...(uploadMode === 'folder' ? { directory: true } : {}), // 根据模式决定是否支持文件夹上传
     beforeUpload: (file: File) => {
       // 检查文件类型（只支持.md格式）
       const isMarkdownFile =
@@ -114,18 +113,71 @@ const ArticleImport: React.FC = () => {
         return false;
       }
 
+      // 检查是否已存在同名文件
+      const existingFile = fileList.find((f) => f.name === file.name);
+      if (existingFile) {
+        message.warning(`文件 ${file.name} 已存在，将跳过`);
+        return false;
+      }
+
       setFileList((prev) => [...prev, file]);
       return false; // 阻止自动上传
     },
     onRemove: (file: any) => {
       setFileList((prev) => prev.filter((f) => f.name !== file.name));
     },
-    fileList: fileList.map((file, index) => ({
-      uid: file.name + '_' + index,
-      name: file.name,
-      status: 'done' as const,
-      size: file.size,
-    })),
+    fileList: fileList.map((file, index) => {
+      let status: 'uploading' | 'done' | 'error' = 'done';
+
+      if (importing) {
+        if (progress?.currentFile === file.name) {
+          status = 'uploading';
+        } else if (progress && progress.processedFiles > 0) {
+          // 检查该文件是否已处理完成
+          const processedIndex = fileList.findIndex(
+            (f) => f.name === file.name,
+          );
+          if (processedIndex < progress.processedFiles) {
+            status = 'done'; // 使用'done'代替'success'
+          } else {
+            status = 'uploading';
+          }
+        } else {
+          status = 'uploading';
+        }
+      }
+
+      return {
+        uid: file.name + '_' + index,
+        name: file.name,
+        status,
+        size: file.size,
+        percent:
+          importing && progress?.currentFile === file.name
+            ? progress.progress
+            : undefined,
+      };
+    }),
+  };
+
+  // 重置状态
+  const handleReset = () => {
+    setFileList([]);
+    setImporting(false);
+    setProgress(null);
+    setResult(null);
+    setResultModalVisible(false);
+    setUploadMode('file'); // 重置上传模式为单文件模式
+
+    if (progressTimer.current) {
+      clearInterval(progressTimer.current);
+    }
+
+    // 重置轮询计数器
+    pollingAttempts.current = 0;
+    maxPollingAttempts.current = 0;
+
+    formRef.current?.resetFields();
   };
   // 开始轮询进度
   const startProgressPolling = (taskId: string) => {
@@ -151,7 +203,7 @@ const ArticleImport: React.FC = () => {
         ) {
           // 进度数据中已包含最终结果
           if (progressData.results) {
-            const resultData: ArticleImportResponseDto = {
+            const resultData: ArticleImportResponseType = {
               totalFiles: progressData.totalFiles,
               successCount: progressData.successCount,
               failureCount: progressData.failureCount,
@@ -192,7 +244,7 @@ const ArticleImport: React.FC = () => {
     try {
       setImporting(true);
 
-      const config: ArticleImportConfigDto = {
+      const config: ArticleImportConfigType = {
         defaultCategory: values.defaultCategory,
         defaultTags: values.defaultTags || [],
         autoPublish: values.autoPublish || false,
@@ -207,14 +259,15 @@ const ArticleImport: React.FC = () => {
       // 根据文件数量选择导入模式
       if (fileList.length <= 10) {
         // 少量文件使用同步导入
-        const response: ArticleImportResponseDto =
+        const response: ArticleImportResponseType =
           await articleAPI.importArticles(formData);
         setResult(response);
         setImporting(false);
+        handleReset();
         message.success('导入完成');
       } else {
         // 大量文件使用异步导入
-        const response: StartImportResponseDto =
+        const response: StartImportResponseType =
           await articleAPI.importArticlesAsync(formData);
         message.success('导入任务已创建，正在处理中...');
 
@@ -229,25 +282,6 @@ const ArticleImport: React.FC = () => {
       message.error(error.message || '导入失败');
       setImporting(false);
     }
-  };
-
-  // 重置状态
-  const handleReset = () => {
-    setFileList([]);
-    setImporting(false);
-    setProgress(null);
-    setResult(null);
-    setResultModalVisible(false);
-
-    if (progressTimer.current) {
-      clearInterval(progressTimer.current);
-    }
-
-    // 重置轮询计数器
-    pollingAttempts.current = 0;
-    maxPollingAttempts.current = 0;
-
-    formRef.current?.resetFields();
   };
 
   // 返回文章列表
@@ -349,9 +383,28 @@ const ArticleImport: React.FC = () => {
         >
           {/* 选择文件 */}
           <ProCard title="选择文件" style={{ marginBottom: 24 }}>
+            <div style={{ marginBottom: 16 }}>
+              <Radio.Group
+                value={uploadMode}
+                onChange={(e) => {
+                  setUploadMode(e.target.value);
+                  // 切换模式时清空文件列表
+                  setFileList([]);
+                }}
+                style={{ marginBottom: 16 }}
+              >
+                <Radio.Button value="file">文件上传</Radio.Button>
+                <Radio.Button value="folder">文件夹上传</Radio.Button>
+              </Radio.Group>
+            </div>
+
             <Alert
               message="支持的文件格式"
-              description="支持 Markdown (.md) 格式的文件，支持文件夹上传，单个文件大小不超过 10MB，最多100个文件"
+              description={`支持 Markdown (.md) 格式的文件，${
+                uploadMode === 'folder'
+                  ? '支持文件夹批量上传'
+                  : '支持单个文件或多个文件上传'
+              }，单个文件大小不超过 10MB，最多100个文件`}
               type="info"
               showIcon
               style={{ marginBottom: 16 }}
@@ -360,9 +413,17 @@ const ArticleImport: React.FC = () => {
               <p className="ant-upload-drag-icon">
                 <InboxOutlined />
               </p>
-              <p className="ant-upload-text">点击或拖拽文件到此区域上传</p>
+              <p className="ant-upload-text">
+                {uploadMode === 'folder'
+                  ? '点击选择文件夹或拖拽文件夹到此区域上传'
+                  : '点击选择文件或拖拽文件到此区域上传'}
+              </p>
               <p className="ant-upload-hint">支持格式：.md（Markdown文件）</p>
-              <p className="ant-upload-hint">支持文件夹上传，最多100个文件</p>
+              <p className="ant-upload-hint">
+                {uploadMode === 'folder'
+                  ? '支持文件夹批量上传，最多100个文件'
+                  : '支持单个或多个文件上传，最多100个文件'}
+              </p>
             </Dragger>
           </ProCard>
 

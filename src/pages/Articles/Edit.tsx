@@ -1,9 +1,11 @@
 import { articleAPI, categoryAPI, tagAPI } from '@/services';
-import type { CreateArticleDto } from '@/types';
+import type { CreateArticleType } from '@/types';
 import { EyeOutlined } from '@ant-design/icons';
 import {
   PageContainer,
   ProForm,
+  ProFormDateTimePicker,
+  ProFormDigit,
   ProFormSelect,
   ProFormSwitch,
   ProFormText,
@@ -110,7 +112,7 @@ const ArticleEdit: React.FC = () => {
   }, [isEdit, id, form]);
 
   // 提交表单
-  const handleSubmit = async (values: CreateArticleDto) => {
+  const handleSubmit = async (values: CreateArticleType) => {
     if (!content.trim()) {
       message.error('请输入文章内容');
       return;
@@ -121,20 +123,18 @@ const ArticleEdit: React.FC = () => {
       // 获取所有表单字段的值
       const allFormValues = await form.validateFields();
 
+      const commitData = { ...allFormValues, ...values };
       const submitData = {
-        ...values,
-        ...allFormValues,
+        ...commitData,
         content,
-        slug: values.slug,
+        slug: commitData.slug,
         // 确保数值类型字段正确转换
-        weight: allFormValues.weight ? Number(allFormValues.weight) : undefined,
+        weight: commitData.weight ? Number(commitData.weight) : undefined,
         // 确保布尔类型字段正确处理
-        isTop: Boolean(allFormValues.isTop),
-        isFeatured: Boolean(allFormValues.isFeatured),
-        allowComment: allFormValues.allowComment !== false, // 默认为true
+        isTop: Boolean(commitData.isTop),
+        isFeatured: Boolean(commitData.isFeatured),
+        allowComment: commitData.allowComment !== false, // 默认为true
       };
-
-      console.log('submitData:', submitData);
       if (isEdit && id) {
         await articleAPI.updateArticle(id, submitData);
         message.success('文章更新成功');
@@ -154,6 +154,7 @@ const ArticleEdit: React.FC = () => {
   const handleSaveDraft = async () => {
     try {
       const values = await form.validateFields(['title']);
+
       await handleSubmit({ ...values, status: 'draft' });
     } catch (error) {
       console.error('保存草稿失败:', error);
@@ -314,6 +315,25 @@ const ArticleEdit: React.FC = () => {
           <Card title="发布设置" size="small">
             <ProForm form={form} layout="vertical" submitter={false}>
               <ProFormSelect
+                name="status"
+                label="文章状态"
+                placeholder="选择状态"
+                options={[
+                  { label: '草稿', value: 'draft' },
+                  { label: '已发布', value: 'published' },
+                  { label: '已归档', value: 'archived' },
+                ]}
+                initialValue="draft"
+              />
+
+              <ProFormDateTimePicker
+                name="publishedAt"
+                label="发布时间"
+                placeholder="选择发布时间"
+                tooltip="留空则使用当前时间"
+              />
+
+              <ProFormSelect
                 name="categoryId"
                 label="分类"
                 placeholder="选择分类"
@@ -335,6 +355,13 @@ const ArticleEdit: React.FC = () => {
               />
 
               <Divider />
+
+              <ProFormSwitch
+                name="isVisible"
+                label="文章可见"
+                tooltip="不可见的文章不会在前台显示"
+                initialValue={true}
+              />
 
               <ProFormSwitch
                 name="isTop"
@@ -368,8 +395,18 @@ const ArticleEdit: React.FC = () => {
 
           <Card title="SEO设置" size="small" style={{ marginTop: 16 }}>
             <ProForm form={form} layout="vertical" submitter={false}>
+              <ProFormText
+                name="seoTitle"
+                label="SEO标题"
+                placeholder="请输入SEO标题（留空使用文章标题）"
+                fieldProps={{
+                  maxLength: 60,
+                  showCount: true,
+                }}
+              />
+
               <ProFormTextArea
-                name="metaDescription"
+                name="seoDescription"
                 label="SEO描述"
                 placeholder="请输入SEO描述"
                 fieldProps={{
@@ -379,9 +416,26 @@ const ArticleEdit: React.FC = () => {
                 }}
               />
 
+              <ProFormText
+                name="seoKeywords"
+                label="SEO关键词"
+                placeholder="请输入SEO关键词，用逗号分隔"
+              />
+
+              <ProFormTextArea
+                name="metaDescription"
+                label="Meta描述"
+                placeholder="请输入Meta描述"
+                fieldProps={{
+                  rows: 2,
+                  maxLength: 160,
+                  showCount: true,
+                }}
+              />
+
               <ProFormSelect
                 name="metaKeywords"
-                label="SEO关键词"
+                label="Meta关键词"
                 placeholder="输入关键词后按回车添加"
                 mode="tags"
                 fieldProps={{
@@ -399,14 +453,26 @@ const ArticleEdit: React.FC = () => {
 
           <Card title="高级设置" size="small" style={{ marginTop: 16 }}>
             <ProForm form={form} layout="vertical" submitter={false}>
-              <ProFormText
+              <ProFormDigit
+                name="readingTime"
+                label="阅读时间（分钟）"
+                placeholder="预计阅读时间"
+                tooltip="留空则自动计算"
+                fieldProps={{
+                  min: 1,
+                  max: 999,
+                  precision: 0,
+                }}
+              />
+
+              <ProFormDigit
                 name="weight"
                 label="权重"
                 placeholder="0-999，数值越大排序越靠前"
                 fieldProps={{
-                  type: 'number',
                   min: 0,
                   max: 999,
+                  precision: 0,
                 }}
               />
 
@@ -414,6 +480,7 @@ const ArticleEdit: React.FC = () => {
                 name="allowComment"
                 label="允许评论"
                 tooltip="是否允许用户对此文章进行评论"
+                initialValue={true}
               />
             </ProForm>
           </Card>

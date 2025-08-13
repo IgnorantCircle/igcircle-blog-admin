@@ -1,14 +1,16 @@
 import { articleAPI } from '@/services/article';
-import type { Article, ArticleStats } from '@/types';
+import type { ArticleStatsType, ArticleType } from '@/types';
 import {
+  ClockCircleOutlined,
   EyeOutlined,
   FileTextOutlined,
   FireOutlined,
   LikeOutlined,
   MessageOutlined,
+  ShareAltOutlined,
   TrophyOutlined,
 } from '@ant-design/icons';
-import { Line, Pie } from '@ant-design/plots';
+import { Column, Line, Pie } from '@ant-design/plots';
 import { PageContainer, StatisticCard } from '@ant-design/pro-components';
 import {
   Button,
@@ -31,7 +33,7 @@ const { Option } = Select;
 
 const ArticleStatistics: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<ArticleStats | null>(null);
+  const [stats, setStats] = useState<ArticleStatsType | null>(null);
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs]>([
     dayjs().subtract(30, 'day'),
     dayjs(),
@@ -120,7 +122,7 @@ const ArticleStatistics: React.FC = () => {
       dataIndex: 'title',
       key: 'title',
       ellipsis: true,
-      render: (text: string, record: Article) => (
+      render: (text: string, record: ArticleType) => (
         <div>
           <div style={{ fontWeight: 500 }}>
             {record.isTop && <Tag color="red">置顶</Tag>}
@@ -135,21 +137,22 @@ const ArticleStatistics: React.FC = () => {
       dataIndex: 'viewCount',
       key: 'viewCount',
       width: 100,
-      sorter: (a: Article, b: Article) => a.viewCount - b.viewCount,
+      sorter: (a: ArticleType, b: ArticleType) => a.viewCount - b.viewCount,
     },
     {
       title: '点赞数',
       dataIndex: 'likeCount',
       key: 'likeCount',
       width: 100,
-      sorter: (a: Article, b: Article) => a.likeCount - b.likeCount,
+      sorter: (a: ArticleType, b: ArticleType) => a.likeCount - b.likeCount,
     },
     {
       title: '评论数',
       dataIndex: 'commentCount',
       key: 'commentCount',
       width: 100,
-      sorter: (a: Article, b: Article) => a.commentCount - b.commentCount,
+      sorter: (a: ArticleType, b: ArticleType) =>
+        a.commentCount - b.commentCount,
     },
     {
       title: '发布时间',
@@ -199,7 +202,7 @@ const ArticleStatistics: React.FC = () => {
     >
       {/* 总览统计卡片 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col span={6}>
+        <Col span={4}>
           <StatisticCard
             statistic={{
               title: '文章总数',
@@ -208,7 +211,7 @@ const ArticleStatistics: React.FC = () => {
             }}
           />
         </Col>
-        <Col span={6}>
+        <Col span={4}>
           <StatisticCard
             statistic={{
               title: '总浏览量',
@@ -217,7 +220,7 @@ const ArticleStatistics: React.FC = () => {
             }}
           />
         </Col>
-        <Col span={6}>
+        <Col span={4}>
           <StatisticCard
             statistic={{
               title: '总点赞数',
@@ -226,12 +229,33 @@ const ArticleStatistics: React.FC = () => {
             }}
           />
         </Col>
-        <Col span={6}>
+        <Col span={4}>
           <StatisticCard
             statistic={{
               title: '总评论数',
               value: stats.totalComments,
               icon: <MessageOutlined style={{ color: '#722ed1' }} />,
+            }}
+          />
+        </Col>
+        <Col span={4}>
+          <StatisticCard
+            statistic={{
+              title: '总分享数',
+              value: stats.totalShares,
+              icon: <ShareAltOutlined style={{ color: '#13c2c2' }} />,
+            }}
+          />
+        </Col>
+        <Col span={4}>
+          <StatisticCard
+            statistic={{
+              title: '平均阅读时长',
+              value: stats.readingTimeStats
+                ? Math.round(stats.readingTimeStats.average)
+                : 0,
+              suffix: '分钟',
+              icon: <ClockCircleOutlined style={{ color: '#eb2f96' }} />,
             }}
           />
         </Col>
@@ -303,13 +327,6 @@ const ArticleStatistics: React.FC = () => {
             <Row gutter={16} style={{ marginTop: 16 }}>
               <Col span={12}>
                 <Statistic
-                  title="总分享数"
-                  value={stats.totalShares}
-                  valueStyle={{ color: '#722ed1' }}
-                />
-              </Col>
-              <Col span={12}>
-                <Statistic
                   title="平均浏览"
                   value={
                     stats.published > 0
@@ -317,6 +334,18 @@ const ArticleStatistics: React.FC = () => {
                       : 0
                   }
                   valueStyle={{ color: '#13c2c2' }}
+                />
+              </Col>
+              <Col span={12}>
+                <Statistic
+                  title="发布率"
+                  value={
+                    stats.total > 0
+                      ? ((stats.published / stats.total) * 100).toFixed(1)
+                      : 0
+                  }
+                  suffix="%"
+                  valueStyle={{ color: '#1890ff' }}
                 />
               </Col>
             </Row>
@@ -346,8 +375,143 @@ const ArticleStatistics: React.FC = () => {
         </Col>
       </Row>
 
-      {/* 图表和表格 */}
+      {/* 图表区域 */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col span={8}>
+          <Card title="月度文章发布趋势" size="small">
+            <Line
+              data={stats.monthlyStats}
+              xField="month"
+              yField="articles"
+              height={250}
+              point={{
+                size: 5,
+                shape: 'diamond',
+              }}
+              label={{
+                style: {
+                  fill: '#aaa',
+                },
+              }}
+            />
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card title="分类分布" size="small">
+            <Pie
+              data={stats.categoryStats}
+              angleField="count"
+              colorField="name"
+              radius={0.8}
+              height={250}
+              label={{
+                type: 'outer',
+                content: '{name}: {percentage}%',
+              }}
+              interactions={[{ type: 'element-active' }]}
+            />
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card title="阅读时长分布" size="small">
+            <Column
+              data={stats.readingTimeStats?.distribution || []}
+              xField="range"
+              yField="count"
+              height={250}
+              columnStyle={{
+                radius: [2, 2, 0, 0],
+              }}
+              label={{
+                position: 'top',
+                style: {
+                  fill: '#aaa',
+                },
+              }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* 表格区域 */}
       <Row gutter={[16, 16]}>
+        <Col span={12}>
+          <Card title="最新文章" size="small">
+            <Table
+              dataSource={stats.recentArticles}
+              columns={[
+                {
+                  title: '标题',
+                  dataIndex: 'title',
+                  key: 'title',
+                  ellipsis: true,
+                },
+                {
+                  title: '状态',
+                  dataIndex: 'status',
+                  key: 'status',
+                  render: (status: string) => (
+                    <Tag
+                      color={
+                        status === 'published'
+                          ? 'green'
+                          : status === 'draft'
+                          ? 'orange'
+                          : 'red'
+                      }
+                    >
+                      {status === 'published'
+                        ? '已发布'
+                        : status === 'draft'
+                        ? '草稿'
+                        : '已归档'}
+                    </Tag>
+                  ),
+                },
+                {
+                  title: '浏览量',
+                  dataIndex: 'views',
+                  key: 'views',
+                },
+              ]}
+              pagination={false}
+              size="small"
+              rowKey="id"
+            />
+          </Card>
+        </Col>
+        <Col span={12}>
+          <Card title="热门文章" size="small">
+            <Table
+              dataSource={stats.popularArticles}
+              columns={[
+                {
+                  title: '标题',
+                  dataIndex: 'title',
+                  key: 'title',
+                  ellipsis: true,
+                },
+                {
+                  title: '浏览量',
+                  dataIndex: 'views',
+                  key: 'views',
+                },
+                {
+                  title: '点赞数',
+                  dataIndex: 'likes',
+                  key: 'likes',
+                },
+              ]}
+              pagination={false}
+              size="small"
+              rowKey="id"
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* 分类和标签统计 */}
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         <Col span={12}>
           <Card title="分类统计" size="small">
             <Table
@@ -386,31 +550,6 @@ const ArticleStatistics: React.FC = () => {
           </Card>
         </Col>
       </Row>
-
-      {/* 月度趋势 */}
-      {stats.monthlyStats && stats.monthlyStats.length > 0 && (
-        <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-          <Col span={24}>
-            <Card title="月度趋势" size="small">
-              <Line
-                data={stats.monthlyStats}
-                xField="month"
-                yField="articles"
-                point={{
-                  size: 5,
-                  shape: 'diamond',
-                }}
-                label={{
-                  style: {
-                    fill: '#aaa',
-                  },
-                }}
-                height={300}
-              />
-            </Card>
-          </Col>
-        </Row>
-      )}
     </PageContainer>
   );
 };

@@ -138,7 +138,13 @@ export const articleAPI = {
   // 批量导出文章
   batchExportArticles: (
     data: BatchExportArticleType,
-  ): Promise<BatchExportResponseType> => {
+  ): Promise<BatchExportResponseType | Blob> => {
+    // 如果是多篇markdown文章，返回zip文件
+    if (data.format === 'markdown' && data.ids && data.ids.length > 1) {
+      return http.post('/admin/articles/batch/export', data, {
+        responseType: 'blob',
+      }) as Promise<Blob>;
+    }
     return http.post('/admin/articles/batch/export', data);
   },
 

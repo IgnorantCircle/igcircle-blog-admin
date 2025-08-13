@@ -1,6 +1,6 @@
+import { categoryAPI, tagAPI } from '@/services';
 import { articleAPI } from '@/services/article';
-import type { Article } from '@/types';
-import { formatTimestamp } from '@/utils/format';
+import type { ArticleType, CategoryType, TagType } from '@/types';
 import {
   DeleteOutlined,
   EditOutlined,
@@ -25,13 +25,20 @@ import {
   Tag,
   message,
 } from 'antd';
-import React, { useRef } from 'react';
-
-type ArticleItem = Article;
+import React, { useEffect, useRef, useState } from 'react';
 
 const ArticleList: React.FC = () => {
   const actionRef = useRef<ActionType>();
+  const [categories, setCategories] = useState<CategoryType[]>([]);
+  const [tags, setTags] = useState<TagType[]>([]);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys: React.Key[]) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+    },
+  };
   // 状态标签颜色映射
   const statusColorMap = {
     draft: 'orange',
@@ -117,8 +124,110 @@ const ArticleList: React.FC = () => {
     }
   };
 
+  // 批量操作
+  const handleBatchPublish = async (selectedRowKeys: React.Key[]) => {
+    try {
+      await articleAPI.batchPublishArticles({
+        ids: selectedRowKeys as string[],
+      });
+      message.success('批量发布成功');
+      actionRef.current?.reload();
+      setSelectedRowKeys([]);
+    } catch (error) {
+      message.error('批量发布失败');
+    }
+  };
+
+  const handleBatchArchive = async (selectedRowKeys: React.Key[]) => {
+    try {
+      await articleAPI.batchArchiveArticles({
+        ids: selectedRowKeys as string[],
+      });
+      message.success('批量归档成功');
+      actionRef.current?.reload();
+      setSelectedRowKeys([]);
+    } catch (error) {
+      message.error('批量归档失败');
+    }
+  };
+
+  const handleBatchDelete = async (selectedRowKeys: React.Key[]) => {
+    try {
+      await articleAPI.batchDeleteArticles({
+        ids: selectedRowKeys as string[],
+      });
+      message.success('批量删除成功');
+      actionRef.current?.reload();
+      setSelectedRowKeys([]);
+    } catch (error) {
+      message.error('批量删除失败');
+    }
+  };
+
+  const handleBatchExport = async (
+    selectedRowKeys: React.Key[],
+    format: 'json' | 'csv' | 'markdown' = 'json',
+  ) => {
+    try {
+      const result = await articleAPI.batchExportArticles({
+        ids: selectedRowKeys as string[],
+        format,
+        includeContent: true,
+        includeTags: true,
+        includeCategory: true,
+      });
+
+      // 如果返回的是Blob（zip文件），直接下载
+      if (result instanceof Blob) {
+        const url = URL.createObjectURL(result);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `articles_export_${
+          new Date().toISOString().split('T')[0]
+        }.zip`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        // 处理JSON响应
+        const jsonResult = result as any;
+        if (format === 'json') {
+          const blob = new Blob([JSON.stringify(jsonResult.data, null, 2)], {
+            type: 'application/json',
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `articles_export_${
+            new Date().toISOString().split('T')[0]
+          }.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+        } else {
+          const blob = new Blob([jsonResult.data as string], {
+            type: format === 'csv' ? 'text/csv' : 'text/markdown',
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download =
+            jsonResult.filename ||
+            `articles_export_${
+              new Date().toISOString().split('T')[0]
+            }.${format}`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      }
+
+      message.success('导出成功');
+      setSelectedRowKeys([]);
+    } catch (error) {
+      message.error('导出失败');
+    }
+  };
+
   // 更多操作菜单
-  const getMoreMenuItems = (record: ArticleItem): MenuProps['items'] => [
+  const getMoreMenuItems = (record: ArticleType): MenuProps['items'] => [
     {
       key: 'publish',
       label: record.status === 'published' ? '取消发布' : '发布',
@@ -147,7 +256,7 @@ const ArticleList: React.FC = () => {
     },
   ];
 
-  const columns: ProColumns<ArticleItem>[] = [
+  const columns: ProColumns<ArticleType>[] = [
     {
       title: '标题',
       dataIndex: 'title',
@@ -157,7 +266,7 @@ const ArticleList: React.FC = () => {
           keyword: value,
         }),
       },
-      fieldProps: {
+      formItemProps: {
         label: '关键词',
       },
 
@@ -207,13 +316,42 @@ const ArticleList: React.FC = () => {
     {
       title: '分类',
       dataIndex: ['category', 'name'],
+      valueType: 'select',
       width: 120,
+      fieldProps: {
+        showSearch: true,
+        mode: 'multiple',
+      },
+      search: {
+        transform: (value) => ({
+          categoryIds: value,
+        }),
+      },
+      valueEnum: categories.reduce((acc, category: CategoryType) => {
+        acc[category.id] = category.name;
+        return acc;
+      }, {} as Record<string, string>),
       render: (text) => text || '-',
     },
     {
       title: '标签',
       dataIndex: 'tags',
+      valueType: 'select',
+      search: {
+        transform: (value) => {
+          return { tagIds: value };
+        },
+      },
+      fieldProps: {
+        showSearch: true,
+        mode: 'multiple',
+      },
+
       width: 200,
+      valueEnum: tags.reduce((acc, tag: TagType) => {
+        acc[tag.id] = tag.name;
+        return acc;
+      }, {} as Record<string, string>),
       render: (_, record) => (
         <Space wrap>
           {record.tags?.map((tag) => (
@@ -237,6 +375,43 @@ const ArticleList: React.FC = () => {
       ),
     },
     {
+      title: '阅读时间',
+      dataIndex: 'readingTime',
+      width: 100,
+      search: {
+        transform: (value) => {
+          if (Array.isArray(value) && value.length === 2) {
+            return {
+              minReadingTime: value[0],
+              maxReadingTime: value[1],
+            };
+          }
+          return {};
+        },
+      },
+      valueType: 'digitRange',
+      fieldProps: {
+        placeholder: ['最小时间', '最大时间'],
+      },
+      render: (_, record) =>
+        record.readingTime ? `${record.readingTime}分钟` : '-',
+    },
+    {
+      title: '可见性',
+      dataIndex: 'isVisible',
+      width: 80,
+      valueType: 'select',
+      valueEnum: {
+        true: { text: '可见', status: 'Success' },
+        false: { text: '隐藏', status: 'Default' },
+      },
+      render: (_, record) => (
+        <Tag color={record.isVisible ? 'green' : 'gray'}>
+          {record.isVisible ? '可见' : '隐藏'}
+        </Tag>
+      ),
+    },
+    {
       title: '作者',
       dataIndex: ['author', 'username'],
       width: 100,
@@ -247,26 +422,24 @@ const ArticleList: React.FC = () => {
       dataIndex: 'createdAt',
       width: 150,
       valueType: 'dateTime',
-      render: (_, record) => formatTimestamp(record.createdAt),
     },
     {
       title: '更新时间',
       dataIndex: 'updatedAt',
       width: 150,
       valueType: 'dateTime',
-      render: (_, record) => formatTimestamp(record.updatedAt),
     },
     {
       title: '发布时间',
       dataIndex: 'publishedAt',
       width: 150,
-      valueType: 'date',
-      render: (_, record) => formatTimestamp(record.publishedAt),
+      valueType: 'dateTime',
     },
     {
       title: '操作',
       valueType: 'option',
-      width: 150,
+      width: 280,
+      fixed: 'right',
       render: (_, record) => [
         <Button
           key="view"
@@ -274,7 +447,7 @@ const ArticleList: React.FC = () => {
           size="small"
           icon={<EyeOutlined />}
           onClick={() =>
-            window.open(`/articles/preview/${record.id}`, '_blank')
+            history.push(`/articles/preview/${record.id}`, '_blank')
           }
         >
           预览
@@ -303,25 +476,113 @@ const ArticleList: React.FC = () => {
           key="more"
           menu={{ items: getMoreMenuItems(record) }}
           trigger={['click']}
+          overlayStyle={{ width: 120 }}
         >
-          <Button type="link" size="small" icon={<MoreOutlined />}>
-            更多
-          </Button>
+          <Button type="link" size="small" icon={<MoreOutlined />} />
         </Dropdown>,
       ],
     },
   ];
 
+  // 加载分类和标签数据
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [categoryRes, tagRes] = await Promise.all([
+          categoryAPI.getCategories({ limit: 100 }),
+          tagAPI.getTags({ limit: 100 }),
+        ]);
+
+        setCategories(categoryRes.items || []);
+        setTags(tagRes.items || []);
+      } catch (error) {
+        message.error('加载数据失败');
+      }
+    };
+    loadData();
+  }, []);
+
   return (
     <PageContainer>
-      <ProTable<ArticleItem>
+      <ProTable<ArticleType>
         headerTitle="文章管理"
         actionRef={actionRef}
         rowKey="id"
         search={{
           labelWidth: 120,
         }}
-        scroll={{ x: 'auto' }}
+        scroll={{ x: 1100 }}
+        rowSelection={rowSelection}
+        tableAlertRender={({ selectedRowKeys, onCleanSelected }) => (
+          <Space size={24}>
+            <span>
+              已选择 <strong>{selectedRowKeys.length}</strong> 项
+              <a style={{ marginLeft: 8 }} onClick={onCleanSelected}>
+                取消选择
+              </a>
+            </span>
+          </Space>
+        )}
+        tableAlertOptionRender={({ selectedRowKeys }) => {
+          return (
+            <Space size={16}>
+              <Button
+                size="small"
+                onClick={() => handleBatchPublish(selectedRowKeys)}
+                disabled={selectedRowKeys.length === 0}
+              >
+                批量发布
+              </Button>
+              <Button
+                size="small"
+                onClick={() => handleBatchArchive(selectedRowKeys)}
+                disabled={selectedRowKeys.length === 0}
+              >
+                批量归档
+              </Button>
+              <Dropdown
+                menu={{
+                  items: [
+                    {
+                      key: 'export-json',
+                      label: '导出为JSON',
+                      onClick: () => handleBatchExport(selectedRowKeys, 'json'),
+                    },
+                    {
+                      key: 'export-csv',
+                      label: '导出为CSV',
+                      onClick: () => handleBatchExport(selectedRowKeys, 'csv'),
+                    },
+                    {
+                      key: 'export-markdown',
+                      label: '导出为Markdown',
+                      onClick: () =>
+                        handleBatchExport(selectedRowKeys, 'markdown'),
+                    },
+                  ],
+                }}
+              >
+                <Button size="small" disabled={selectedRowKeys.length === 0}>
+                  批量导出
+                </Button>
+              </Dropdown>
+              <Popconfirm
+                title="确定要删除选中的文章吗？"
+                onConfirm={() => handleBatchDelete(selectedRowKeys)}
+                okText="确定"
+                cancelText="取消"
+              >
+                <Button
+                  size="small"
+                  danger
+                  disabled={selectedRowKeys.length === 0}
+                >
+                  批量删除
+                </Button>
+              </Popconfirm>
+            </Space>
+          );
+        }}
         toolBarRender={() => [
           <Button
             key="create"
@@ -347,18 +608,11 @@ const ArticleList: React.FC = () => {
         ]}
         request={async (params, sort) => {
           try {
+            const { current, pageSize, ...formData } = params;
             const response = await articleAPI.getArticles({
-              page: params.current,
-              limit: params.pageSize,
-              keyword: params.keyword,
-              status: params.status,
-              categoryId: params.categoryId,
-              tagId: params.tagId,
-              isFeatured: params.isFeatured,
-              isTop: params.isTop,
-              authorId: params.authorId,
-              startDate: params.startDate,
-              endDate: params.endDate,
+              page: current,
+              limit: pageSize,
+              ...formData,
               sortBy: sort && Object.keys(sort)[0],
               sortOrder:
                 sort && Object.values(sort)[0] === 'ascend' ? 'ASC' : 'DESC',
