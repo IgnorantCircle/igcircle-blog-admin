@@ -1,5 +1,4 @@
 import type {
-  ArticleImportResponseType,
   ArticleQueryType,
   ArticleStatsType,
   ArticleType,
@@ -148,17 +147,9 @@ export const articleAPI = {
     return http.post('/admin/articles/batch/export', data);
   },
 
-  // 文章导入相关API
-  // 同步导入文章
-  importArticles: (formData: FormData): Promise<ArticleImportResponseType> => {
+  // 导入文章
+  importArticles: (formData: FormData): Promise<StartImportResponseType> => {
     return http.post('/admin/articles/import', formData);
-  },
-
-  // 异步导入文章
-  importArticlesAsync: (
-    formData: FormData,
-  ): Promise<StartImportResponseType> => {
-    return http.post('/admin/articles/import/async', formData);
   },
 
   // 获取导入进度

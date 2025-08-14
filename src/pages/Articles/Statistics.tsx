@@ -1,5 +1,5 @@
 import { articleAPI } from '@/services/article';
-import type { ArticleStatsType, ArticleType } from '@/types';
+import type { ArticleStatsType } from '@/types';
 import {
   ClockCircleOutlined,
   EyeOutlined,
@@ -115,54 +115,6 @@ const ArticleStatistics: React.FC = () => {
     },
   ];
 
-  // 热门文章表格列
-  const popularColumns = [
-    {
-      title: '文章标题',
-      dataIndex: 'title',
-      key: 'title',
-      ellipsis: true,
-      render: (text: string, record: ArticleType) => (
-        <div>
-          <div style={{ fontWeight: 500 }}>
-            {record.isTop && <Tag color="red">置顶</Tag>}
-            {record.isFeatured && <Tag color="gold">精选</Tag>}
-            {text}
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: '浏览量',
-      dataIndex: 'viewCount',
-      key: 'viewCount',
-      width: 100,
-      sorter: (a: ArticleType, b: ArticleType) => a.viewCount - b.viewCount,
-    },
-    {
-      title: '点赞数',
-      dataIndex: 'likeCount',
-      key: 'likeCount',
-      width: 100,
-      sorter: (a: ArticleType, b: ArticleType) => a.likeCount - b.likeCount,
-    },
-    {
-      title: '评论数',
-      dataIndex: 'commentCount',
-      key: 'commentCount',
-      width: 100,
-      sorter: (a: ArticleType, b: ArticleType) =>
-        a.commentCount - b.commentCount,
-    },
-    {
-      title: '发布时间',
-      dataIndex: 'publishedAt',
-      key: 'publishedAt',
-      width: 150,
-      render: (text: string) => (text ? dayjs(text).format('YYYY-MM-DD') : '-'),
-    },
-  ];
-
   if (!stats) {
     return (
       <PageContainer>
@@ -262,9 +214,9 @@ const ArticleStatistics: React.FC = () => {
       </Row>
 
       {/* 详细统计 */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col span={8}>
-          <Card title="文章状态分布" size="small">
+      <Row gutter={[16, 16]} style={{ marginBottom: 24, display: 'flex' }}>
+        <Col span={6}>
+          <Card title="文章状态分布" size="small" style={{ height: '100%' }}>
             <Row gutter={16}>
               <Col span={12}>
                 <Statistic
@@ -304,8 +256,8 @@ const ArticleStatistics: React.FC = () => {
             </Row>
           </Card>
         </Col>
-        <Col span={8}>
-          <Card title="特殊标记" size="small">
+        <Col span={6}>
+          <Card title="标记文章" size="small" style={{ height: '100%' }}>
             <Row gutter={16}>
               <Col span={12}>
                 <Statistic
@@ -351,6 +303,32 @@ const ArticleStatistics: React.FC = () => {
             </Row>
           </Card>
         </Col>
+        <Col span={6}>
+          <Card title="分类统计" size="small" style={{ height: '100%' }}>
+            <Table
+              dataSource={stats.categoryStats?.slice(0, 3)}
+              columns={categoryColumns}
+              pagination={false}
+              size="small"
+              rowKey="name"
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card title="热门标签" size="small" style={{ height: '100%' }}>
+            <Space wrap>
+              {stats.tagStats.map((tag) => (
+                <Tag key={tag.id} color="blue" style={{ margin: '4px' }}>
+                  {tag.name} ({tag.articleCount})
+                </Tag>
+              ))}
+            </Space>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* 图表区域 */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col span={8}>
           <Card title="文章状态分布" size="small">
             <Pie
@@ -369,30 +347,7 @@ const ArticleStatistics: React.FC = () => {
                   textAlign: 'center',
                 },
               }}
-              height={200}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      {/* 图表区域 */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col span={8}>
-          <Card title="月度文章发布趋势" size="small">
-            <Line
-              data={stats.monthlyStats}
-              xField="month"
-              yField="articles"
               height={250}
-              point={{
-                size: 5,
-                shape: 'diamond',
-              }}
-              label={{
-                style: {
-                  fill: '#aaa',
-                },
-              }}
             />
           </Card>
         </Col>
@@ -470,8 +425,8 @@ const ArticleStatistics: React.FC = () => {
                 },
                 {
                   title: '浏览量',
-                  dataIndex: 'views',
-                  key: 'views',
+                  dataIndex: 'viewCount',
+                  key: 'viewCount',
                 },
               ]}
               pagination={false}
@@ -493,13 +448,13 @@ const ArticleStatistics: React.FC = () => {
                 },
                 {
                   title: '浏览量',
-                  dataIndex: 'views',
-                  key: 'views',
+                  dataIndex: 'viewCount',
+                  key: 'viewCount',
                 },
                 {
                   title: '点赞数',
-                  dataIndex: 'likes',
-                  key: 'likes',
+                  dataIndex: 'likeCount',
+                  key: 'likeCount',
                 },
               ]}
               pagination={false}
@@ -510,42 +465,27 @@ const ArticleStatistics: React.FC = () => {
         </Col>
       </Row>
 
-      {/* 分类和标签统计 */}
-      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-        <Col span={12}>
-          <Card title="分类统计" size="small">
-            <Table
-              dataSource={stats.categoryStats}
-              columns={categoryColumns}
-              pagination={false}
-              size="small"
-              rowKey="name"
-            />
-          </Card>
-        </Col>
-        <Col span={12}>
-          <Card title="热门标签" size="small">
-            <Space wrap>
-              {stats.tagStats.slice(0, 20).map((tag) => (
-                <Tag key={tag.name} color="blue" style={{ margin: '4px' }}>
-                  {tag.name} ({tag.count})
-                </Tag>
-              ))}
-            </Space>
-          </Card>
-        </Col>
-      </Row>
-
       {/* 热门文章 */}
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         <Col span={24}>
-          <Card title="热门文章" size="small">
-            <Table
-              dataSource={stats.popularArticles}
-              columns={popularColumns}
-              pagination={{ pageSize: 10 }}
-              size="small"
-              rowKey="id"
+          <Card title="月度文章发布趋势" size="small">
+            <Line
+              data={stats.monthlyStats.map((item) => ({
+                month: `${item.year}-${String(item.month).padStart(2, '0')}`,
+                articles: item.count,
+              }))}
+              xField="month"
+              yField="articles"
+              height={250}
+              point={{
+                size: 5,
+                shape: 'diamond',
+              }}
+              label={{
+                style: {
+                  fill: '#aaa',
+                },
+              }}
             />
           </Card>
         </Col>

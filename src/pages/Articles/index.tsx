@@ -378,6 +378,7 @@ const ArticleList: React.FC = () => {
       title: '阅读时间',
       dataIndex: 'readingTime',
       width: 100,
+      sorter: true,
       search: {
         transform: (value) => {
           if (Array.isArray(value) && value.length === 2) {
@@ -422,18 +423,51 @@ const ArticleList: React.FC = () => {
       dataIndex: 'createdAt',
       width: 150,
       valueType: 'dateTime',
+      sorter: true,
+      search: false,
     },
     {
       title: '更新时间',
       dataIndex: 'updatedAt',
       width: 150,
       valueType: 'dateTime',
+      sorter: true,
+      search: false,
     },
     {
       title: '发布时间',
       dataIndex: 'publishedAt',
       width: 150,
       valueType: 'dateTime',
+      sorter: true,
+      sort: true,
+      search: {
+        transform: (value) => {
+          return { publishedAtStart: value };
+        },
+      },
+      hideInSearch: true,
+    },
+    {
+      title: '发布时间',
+      dataIndex: 'publishedAtStart',
+      width: 250,
+      valueType: 'dateRange',
+      hideInTable: true,
+      search: {
+        transform: (value) => {
+          if (Array.isArray(value) && value.length === 2) {
+            return {
+              publishedAtStart: value[0],
+              publishedAtEnd: value[1],
+            };
+          }
+          return {};
+        },
+      },
+      fieldProps: {
+        placeholder: ['开始时间', '结束时间'],
+      },
     },
     {
       title: '操作',

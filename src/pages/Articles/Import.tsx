@@ -5,7 +5,11 @@ import type {
   ImportProgressType,
   StartImportResponseType,
 } from '@/types';
-import { IMPORT_STATUS_COLORS, IMPORT_STATUS_TEXTS } from '@/types';
+import {
+  IMPORT_STATUS_COLORS,
+  IMPORT_STATUS_TEXTS,
+  ImportStatus,
+} from '@/types';
 import { buildImportFormData, calculateMaxPollingAttempts } from '@/utils';
 import {
   ArrowLeftOutlined,
@@ -198,8 +202,8 @@ const ArticleImport: React.FC = () => {
         setProgress(progressData);
 
         if (
-          progressData.status === 'completed' ||
-          progressData.status === 'failed'
+          progressData.status === ImportStatus.COMPLETED ||
+          progressData.status === ImportStatus.FAILED
         ) {
           // 进度数据中已包含最终结果
           if (progressData.results) {
@@ -256,28 +260,18 @@ const ArticleImport: React.FC = () => {
       // 构建FormData
       const formData = buildImportFormData(fileList, config);
 
-      // 根据文件数量选择导入模式
-      if (fileList.length <= 10) {
-        // 少量文件使用同步导入
-        const response: ArticleImportResponseType =
-          await articleAPI.importArticles(formData);
-        setResult(response);
-        setImporting(false);
-        handleReset();
-        message.success('导入完成');
-      } else {
-        // 大量文件使用异步导入
-        const response: StartImportResponseType =
-          await articleAPI.importArticlesAsync(formData);
-        message.success('导入任务已创建，正在处理中...');
+      // 使用异步导入
+      const response: StartImportResponseType = await articleAPI.importArticles(
+        formData,
+      );
+      message.success('导入任务已创建，正在处理中...');
 
-        // 设置轮询超时限制（10分钟，每2秒轮询一次）
-        maxPollingAttempts.current = calculateMaxPollingAttempts(10, 2);
-        pollingAttempts.current = 0;
+      // 设置轮询超时限制（10分钟，每2秒轮询一次）
+      maxPollingAttempts.current = calculateMaxPollingAttempts(10, 2);
+      pollingAttempts.current = 0;
 
-        // 开始轮询进度
-        startProgressPolling(response.taskId);
-      }
+      // 开始轮询进度
+      startProgressPolling(response.taskId);
     } catch (error: any) {
       message.error(error.message || '导入失败');
       setImporting(false);
@@ -501,7 +495,9 @@ const ArticleImport: React.FC = () => {
                     <Progress
                       percent={progress.progress}
                       status={
-                        progress.status === 'failed' ? 'exception' : 'active'
+                        progress.status === ImportStatus.FAILED
+                          ? 'exception'
+                          : 'active'
                       }
                       format={() =>
                         `${progress.processedFiles}/${progress.totalFiles}`

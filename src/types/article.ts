@@ -116,25 +116,38 @@ export interface PublishArticleType {
 
 // 文章统计接口
 export interface ArticleStatsType {
+  // 基础统计
   total: number;
   published: number;
   draft: number;
   archived: number;
+  featuredCount: number;
+  topCount: number;
+
+  // 总体统计
   totalViews: number;
   totalLikes: number;
   totalComments: number;
   totalShares: number;
-  featuredCount: number;
-  topCount: number;
-  recentArticles: ArticleType[];
-  popularArticles: ArticleType[];
+
+  // 分类统计
   categoryStats: { name: string; count: number; percentage: number }[];
-  tagStats: { name: string; count: number; percentage: number }[];
-  monthlyStats: { month: string; articles: number; views: number }[];
+
+  // 标签统计
+  tagStats: { id: string; name: string; articleCount: number }[];
+
+  // 月度统计
+  monthlyStats: { year: number; month: number; count: number }[];
+
+  // 阅读时长统计
   readingTimeStats: {
     average: number;
     distribution: { range: string; count: number }[];
   };
+
+  // 热门文章和最新文章
+  popularArticles: ArticleType[];
+  recentArticles: ArticleType[];
 }
 
 // 文章导入相关类型
@@ -157,7 +170,7 @@ export interface ImportProgressType {
   /** 任务ID */
   taskId: string;
   /** 导入状态 */
-  status: ImportTaskStatusType;
+  status: ImportStatus;
   /** 总文件数 */
   totalFiles: number;
   /** 已处理文件数 */
@@ -227,7 +240,7 @@ export interface StartImportResponseType {
   /** 任务ID */
   taskId: string;
   /** 导入状态 */
-  status: ImportTaskStatusType;
+  status: ImportStatus;
   /** 总文件数 */
   totalFiles: number;
   /** 消息 */
@@ -249,35 +262,31 @@ export interface ImportFileItemType {
   error?: string;
 }
 
-// 导入任务状态
-export type ImportTaskStatusType =
-  | 'pending'
-  | 'processing'
-  | 'completed'
-  | 'failed';
-
-// 导入任务状态枚举
-export enum ImportTaskStatusEnum {
+// 导入任务状态枚举（与server端保持一致）
+export enum ImportStatus {
   PENDING = 'pending',
   PROCESSING = 'processing',
   COMPLETED = 'completed',
   FAILED = 'failed',
 }
 
+// 导入任务状态类型
+export type ImportTaskStatusType = ImportStatus;
+
 // 导入状态文本映射
-export const IMPORT_STATUS_TEXTS: Record<ImportTaskStatusType, string> = {
-  pending: '等待中',
-  processing: '处理中',
-  completed: '已完成',
-  failed: '失败',
+export const IMPORT_STATUS_TEXTS: Record<ImportStatus, string> = {
+  [ImportStatus.PENDING]: '等待中',
+  [ImportStatus.PROCESSING]: '处理中',
+  [ImportStatus.COMPLETED]: '已完成',
+  [ImportStatus.FAILED]: '失败',
 } as const;
 
 // 导入状态颜色映射
-export const IMPORT_STATUS_COLORS: Record<ImportTaskStatusType, string> = {
-  pending: 'orange',
-  processing: 'blue',
-  completed: 'green',
-  failed: 'red',
+export const IMPORT_STATUS_COLORS: Record<ImportStatus, string> = {
+  [ImportStatus.PENDING]: 'orange',
+  [ImportStatus.PROCESSING]: 'blue',
+  [ImportStatus.COMPLETED]: 'green',
+  [ImportStatus.FAILED]: 'red',
 } as const;
 
 // 批量操作基础Type
