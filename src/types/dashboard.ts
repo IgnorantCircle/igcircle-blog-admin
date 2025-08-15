@@ -1,5 +1,5 @@
 import type { ArticleStatsType, ArticleType } from './article';
-import type { CategoryStats } from './category';
+import type { CategoryStatsType } from './category';
 import type { CommentStatsType } from './comment';
 import type { TagStatsType } from './tag';
 import type { UserStatsType } from './user';
@@ -7,7 +7,7 @@ import type { UserStatsType } from './user';
 // 仪表板统计接口
 export interface DashboardStatsType {
   articles: ArticleStatsType;
-  categories: CategoryStats;
+  categories: CategoryStatsType;
   tags: TagStatsType;
   users: UserStatsType;
   comments: CommentStatsType;
@@ -27,6 +27,7 @@ export interface DashboardStatsDataType {
   totalUsers: number;
   onlineUsers: number;
   activeUsers: number;
+  bannerUsers: number;
 }
 
 // 最近文章类型（用于页面组件）

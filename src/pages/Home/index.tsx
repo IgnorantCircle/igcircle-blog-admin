@@ -54,6 +54,7 @@ const Dashboard: React.FC = () => {
     totalUsers: 0,
     onlineUsers: 0,
     activeUsers: 0,
+    bannerUsers: 0,
   });
   const [recentArticles, setRecentArticles] = useState<RecentArticleType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,9 +81,10 @@ const Dashboard: React.FC = () => {
         totalComments: articleStats?.totalComments || 0,
         totalCategories: categoryStats?.total || 0,
         totalTags: tagStats?.total || 0,
-        totalUsers: userStats?.total || 0,
+        totalUsers: userStats?.active || 0,
         onlineUsers: userStats?.onlineUsers || 0,
         activeUsers: userStats?.active || 0,
+        bannerUsers: userStats?.banned || 0,
       });
 
       setRecentArticles(
@@ -191,7 +193,7 @@ const Dashboard: React.FC = () => {
       </Row>
 
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={12} sm={12} md={6}>
           <StatisticCard
             statistic={{
               title: '总点赞数',
@@ -201,7 +203,7 @@ const Dashboard: React.FC = () => {
             loading={loading}
           />
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={12} sm={12} md={6}>
           <StatisticCard
             statistic={{
               title: '总评论数',
@@ -211,7 +213,7 @@ const Dashboard: React.FC = () => {
             loading={loading}
           />
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={12} sm={12} md={6}>
           <StatisticCard
             statistic={{
               title: '分类数',
@@ -221,7 +223,7 @@ const Dashboard: React.FC = () => {
             loading={loading}
           />
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={12} sm={12} md={6}>
           <StatisticCard
             statistic={{
               title: '标签数',
@@ -235,7 +237,7 @@ const Dashboard: React.FC = () => {
 
       {/* 用户统计 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} md={8}>
+        <Col xs={12} sm={12} md={6}>
           <StatisticCard
             statistic={{
               title: '总用户数',
@@ -245,7 +247,7 @@ const Dashboard: React.FC = () => {
             loading={loading}
           />
         </Col>
-        <Col xs={24} sm={12} md={8}>
+        <Col xs={12} sm={12} md={6}>
           <StatisticCard
             statistic={{
               title: '在线用户',
@@ -255,12 +257,22 @@ const Dashboard: React.FC = () => {
             loading={loading}
           />
         </Col>
-        <Col xs={24} sm={12} md={8}>
+        <Col xs={12} sm={12} md={6}>
           <StatisticCard
             statistic={{
               title: '活跃用户',
               value: stats.activeUsers,
               icon: <UserOutlined style={{ color: '#faad14' }} />,
+            }}
+            loading={loading}
+          />
+        </Col>
+        <Col xs={12} sm={12} md={6}>
+          <StatisticCard
+            statistic={{
+              title: '黑名单用户',
+              value: stats.bannerUsers,
+              icon: <UserOutlined style={{ color: '#413c33ff' }} />,
             }}
             loading={loading}
           />
@@ -400,49 +412,13 @@ const Dashboard: React.FC = () => {
               <Col xs={24} sm={12} md={6}>
                 <Card
                   hoverable
-                  onClick={() => history.push('/articles?status=draft')}
+                  onClick={() => history.push('/articles/list')}
                   style={{ textAlign: 'center', cursor: 'pointer' }}
                 >
                   <ClockCircleOutlined
                     style={{ fontSize: 32, color: '#faad14', marginBottom: 8 }}
                   />
-                  <div>管理草稿</div>
-                </Card>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <Card
-                  hoverable
-                  onClick={() => history.push('/categories')}
-                  style={{ textAlign: 'center', cursor: 'pointer' }}
-                >
-                  <FolderOutlined
-                    style={{ fontSize: 32, color: '#f5222d', marginBottom: 8 }}
-                  />
-                  <div>管理分类</div>
-                </Card>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <Card
-                  hoverable
-                  onClick={() => history.push('/tags')}
-                  style={{ textAlign: 'center', cursor: 'pointer' }}
-                >
-                  <TagOutlined
-                    style={{ fontSize: 32, color: '#fa8c16', marginBottom: 8 }}
-                  />
-                  <div>管理标签</div>
-                </Card>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <Card
-                  hoverable
-                  onClick={() => history.push('/comments/list')}
-                  style={{ textAlign: 'center', cursor: 'pointer' }}
-                >
-                  <MessageOutlined
-                    style={{ fontSize: 32, color: '#52c41a', marginBottom: 8 }}
-                  />
-                  <div>管理评论</div>
+                  <div>管理文章</div>
                 </Card>
               </Col>
               <Col xs={24} sm={12} md={6}>
@@ -455,6 +431,18 @@ const Dashboard: React.FC = () => {
                     style={{ fontSize: 32, color: '#722ed1', marginBottom: 8 }}
                   />
                   <div>文章统计</div>
+                </Card>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <Card
+                  hoverable
+                  onClick={() => history.push('/comments/list')}
+                  style={{ textAlign: 'center', cursor: 'pointer' }}
+                >
+                  <MessageOutlined
+                    style={{ fontSize: 32, color: '#52c41a', marginBottom: 8 }}
+                  />
+                  <div>管理评论</div>
                 </Card>
               </Col>
             </Row>
