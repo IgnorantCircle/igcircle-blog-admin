@@ -263,13 +263,10 @@ const ArticleList: React.FC = () => {
       width: 300,
       search: {
         transform: (value) => ({
+          searchMode: 'title',
           keyword: value,
         }),
       },
-      formItemProps: {
-        label: '关键词',
-      },
-
       ellipsis: true,
       render: (text, record) => (
         <div>
@@ -375,6 +372,30 @@ const ArticleList: React.FC = () => {
       ),
     },
     {
+      title: '摘要',
+      dataIndex: 'summary',
+      width: 300,
+      search: {
+        transform: (value) => ({
+          searchMode: 'summary',
+          keyword: value,
+        }),
+      },
+      hideInTable: true,
+    },
+    {
+      title: '内容',
+      dataIndex: 'content',
+      width: 300,
+      search: {
+        transform: (value) => ({
+          searchMode: 'content',
+          keyword: value,
+        }),
+      },
+      hideInTable: true,
+    },
+    {
       title: '阅读时间',
       dataIndex: 'readingTime',
       width: 100,
@@ -440,7 +461,6 @@ const ArticleList: React.FC = () => {
       width: 150,
       valueType: 'dateTime',
       sorter: true,
-      sort: true,
       search: {
         transform: (value) => {
           return { publishedAtStart: value };

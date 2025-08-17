@@ -41,15 +41,13 @@ const TagList: React.FC = () => {
     showSuccessMessage: true,
     successMessage: '更新标签成功',
   });
-  // 删除标签 - 页面层专注业务逻辑，无需手动错误处理
+  // 删除标签
   const handleDelete = async (id: string) => {
-    const result = await deleteTagApi.request(id);
-    if (result) {
-      actionRef.current?.reload();
-    }
+    await deleteTagApi.request(id);
+    actionRef.current?.reload();
   };
 
-  // 处理Modal提交 - 页面层专注业务逻辑，无需手动错误处理
+  // 处理Modal提交
   const handleModalFinish = async (values: TagFormDataType) => {
     let result;
 
