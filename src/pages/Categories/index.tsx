@@ -251,14 +251,18 @@ const CategoryList: React.FC = () => {
                 新建分类
               </Button>,
             ]}
-            request={async (params) => {
+            request={async (params, sort) => {
               try {
                 const { current, pageSize, ...formData } = params;
-
                 const response = await categoryAPI.getCategories({
                   page: current,
                   limit: pageSize,
                   ...formData,
+                  sortBy: sort && Object.keys(sort)[0],
+                  sortOrder:
+                    sort && Object.values(sort)[0] === 'ascend'
+                      ? 'ASC'
+                      : 'DESC',
                 });
                 return {
                   data: response.items || [],
