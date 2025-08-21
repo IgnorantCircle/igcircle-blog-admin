@@ -80,21 +80,9 @@ const ArticleEdit: React.FC = () => {
           setArticle(articleData);
 
           form.setFieldsValue({
-            title: articleData.title,
-            slug: articleData.slug,
-            summary: articleData.summary,
             categoryId: articleData.category?.id,
             tagIds: articleData.tags?.map((tag: any) => tag.id) || [],
-            status: articleData.status,
-            coverImage: articleData.coverImage,
-            isTop: articleData.isTop,
-            isFeatured: articleData.isFeatured,
-            weight: articleData.weight,
-            allowComment: articleData.allowComment,
-            metaDescription: articleData.metaDescription,
-            metaKeywords: articleData.metaKeywords,
-            socialImage: articleData.socialImage,
-            publishedAt: articleData.publishedAt,
+            ...articleData,
           });
 
           setContent(articleData.content || '');
