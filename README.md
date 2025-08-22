@@ -143,6 +143,12 @@ pnpm build
 1. 在 `src/types` 目录下定义相关类型
 2. 在 `src/services` 目录下添加 API 调用函数
 
+## 项目链接
+
+- 用户端：[igcircle-blog-client](https://github.com/IgnorantCircle/igcircle-blog-client)
+- 管理端：[igcircle-blog-admin](https://github.com/IgnorantCircle/igcircle-blog-admin)
+- 服务端：[igcircle-blog-server](https://github.com/IgnorantCircle/igcircle-blog-server)
+
 ## 贡献指南
 
 1. Fork 本仓库
