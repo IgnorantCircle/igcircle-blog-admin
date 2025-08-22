@@ -81,10 +81,10 @@ const Dashboard: React.FC = () => {
         totalComments: articleStats?.totalComments || 0,
         totalCategories: categoryStats?.total || 0,
         totalTags: tagStats?.total || 0,
-        totalUsers: userStats?.active || 0,
+        totalUsers: userStats?.total || 0,
         onlineUsers: userStats?.onlineUsers || 0,
-        activeUsers: userStats?.active || 0,
-        bannerUsers: userStats?.banned || 0,
+        activeUsers: userStats?.activeUsers || 0,
+        bannerUsers: userStats?.bannedUsers || 0,
       });
 
       setRecentArticles(

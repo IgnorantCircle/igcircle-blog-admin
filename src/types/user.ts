@@ -48,10 +48,10 @@ export interface UpdateUserRoleType {
 // 用户统计接口
 export interface UserStatsType {
   total: number;
-  active: number;
-  inactive: number;
-  banned: number;
-  admins: number;
+  activeUsers: number;
+  inactiveUsers: number;
+  bannedUsers: number;
+  adminUsers: number;
   users: number;
   onlineUsers: number;
   emailVerifiedUsers: number;
